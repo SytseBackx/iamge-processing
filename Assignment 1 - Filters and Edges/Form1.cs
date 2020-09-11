@@ -63,16 +63,17 @@ namespace INFOIBV
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
             //byte[,] invertedImage = invertImage(workingImage);
             byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(5, 3);
+            float[,] GaussianFilter = createGaussianFilter(5, 5);
+            byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < contrastedImage.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < contrastedImage.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < FilteredImage.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < FilteredImage.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(contrastedImage[x, y], contrastedImage[x, y], contrastedImage[x, y]);
+                    Color newColor = Color.FromArgb(FilteredImage[x, y], FilteredImage[x, y], FilteredImage[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -197,16 +198,16 @@ namespace INFOIBV
 
             // TODO: add your functionality and checks
             double filterSum = 0;
-            int foff = (size - 1) / 2;
+            int offset = (size - 1) / 2;
             double distance = 0;
             double constant = 1d / (2 * Math.PI * sigma * sigma);
-            for (int y = -foff; y <= foff; y++)
+            for (int y = -offset; y <= offset; y++)
             {
-                for (int x = -foff; x <= foff; x++)
+                for (int x = -offset; x <= offset; x++)
                 {
                     distance = ((y * y) + (x * x)) / (2 * sigma * sigma);
-                    filter[y + foff, x + foff] = Convert.ToSingle( constant * Math.Exp(-distance));
-                    filterSum += filter[y + foff, x + foff];
+                    filter[y + offset, x + offset] = Convert.ToSingle( constant * Math.Exp(-distance));
+                    filterSum += filter[y + offset, x + offset];
                 }
             }
             for (int y = 0; y < size; y++)
@@ -234,7 +235,36 @@ namespace INFOIBV
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
             // TODO: add your functionality and checks, think about border handling and type conversion
+            int kRows = filter.GetLength(0);
+            int kCols = filter.GetLength(1);
+            int filterRadiusX = kRows / 2;
+            int filterRadiusY = kCols / 2;
 
+            for (int x = 0; x < inputImage.GetLength(0); x++)                 // loop over columns
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y++)            // loop over rows
+                {
+
+                    for (int k = 0; k < kRows; k++)
+                    {
+                        int kk = kRows - 1 - k;
+                        for (int l = 0; l < kCols; l++)
+                        {
+                            int ll = kCols - 1 - l;
+
+                            int xx = x + (filterRadiusX - kk);
+                            int yy = y + (filterRadiusY - ll);
+
+                            if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height)
+                            {
+                                tempImage[x, y] += Convert.ToByte(inputImage[xx, yy] * filter[kk, ll]);
+                            }
+                        }
+                    }
+
+
+                }
+            }
             return tempImage;
         }
 
