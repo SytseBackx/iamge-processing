@@ -65,15 +65,16 @@ namespace INFOIBV
             byte[,] contrastedImage = adjustContrast(workingImage);
             float[,] GaussianFilter = createGaussianFilter(5, 5);
             byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
+            byte[,] MedianFilter = medianFilter(workingImage, 5);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < FilteredImage.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < FilteredImage.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < MedianFilter.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < MedianFilter.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(FilteredImage[x, y], FilteredImage[x, y], FilteredImage[x, y]);
+                    Color newColor = Color.FromArgb(MedianFilter[x, y], MedianFilter[x, y], MedianFilter[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -281,7 +282,36 @@ namespace INFOIBV
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
             // TODO: add your functionality and checks, think about border handling and type conversion
+            List<int> temp = new List<int>();
+            int radius = (size - 1) / 2;
+            for (int x = 0; x < inputImage.GetLength(0); x++)                 // loop over columns
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y++)            // loop over rows
+                {
 
+                    for (int k = -radius; k <= radius; k++)
+                    {
+                       
+                        for (int l = -radius; l <= radius; l++)
+                        {
+                           
+
+                            int xx = x + k;
+                            int yy = y + l;
+
+                            if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height)
+                            {
+                                temp.Add(inputImage[xx, yy]);
+                            }
+                        }
+                    }
+                    temp.Sort();
+                    int median = (temp.Count - 1) / 2;
+                    tempImage[x, y] = Convert.ToByte(temp[median]);
+                    temp.Clear();
+
+                }
+            }
             return tempImage;
         }
 
