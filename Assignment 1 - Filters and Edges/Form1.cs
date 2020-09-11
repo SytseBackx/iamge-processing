@@ -61,17 +61,18 @@ namespace INFOIBV
             // ====================================================================
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
-            byte[,] invertedImage = invertImage(workingImage);
+            //byte[,] invertedImage = invertImage(workingImage);
+            byte[,] contrastedImage = adjustContrast(workingImage);
             float[,] GaussianFilter = createGaussianFilter(5, 3);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < invertedImage.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < invertedImage.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < contrastedImage.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < contrastedImage.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(invertedImage[x, y], invertedImage[x, y], invertedImage[x, y]);
+                    Color newColor = Color.FromArgb(contrastedImage[x, y], contrastedImage[x, y], contrastedImage[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -160,7 +161,25 @@ namespace INFOIBV
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
             // TODO: add your functionality and checks
+            byte newmin = 0; byte newmax = 255;
+            List<byte> colors = new List<byte>();
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte pixelColor = inputImage[x, y];                    // get pixel color
+                    colors.Add(pixelColor);
+                }
 
+            byte min = colors.Min();
+            byte max = colors.Max();
+
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte pixelColor = inputImage[x, y];                    // get pixel color
+                    tempImage[x,y] =Convert.ToByte((pixelColor - min) * ( (newmax - newmin) / (max - min)));
+                }
+            //peepeepoopoo
             return tempImage;
         }
 
