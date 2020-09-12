@@ -66,15 +66,16 @@ namespace INFOIBV
             float[,] GaussianFilter = createGaussianFilter(5, 5);
             byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             byte[,] MedianFilter = medianFilter(workingImage, 5);
+            byte[,] ThresholdFilter = thresholdImage(workingImage);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < MedianFilter.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < MedianFilter.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < ThresholdFilter.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < ThresholdFilter.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(MedianFilter[x, y], MedianFilter[x, y], MedianFilter[x, y]);
+                    Color newColor = Color.FromArgb(ThresholdFilter[x, y], ThresholdFilter[x, y], ThresholdFilter[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -343,8 +344,23 @@ namespace INFOIBV
         {
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-
-            // TODO: add your functionality and checks, think about how to represent the binary values
+            byte threshold = 127;
+            byte belowThreshold = 0;
+            byte aboveThreshold = 255;
+            // TODO: add your functionality and checks
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte pixelColor = inputImage[x, y];                    // get pixel color
+                    if (pixelColor > threshold)
+                    {
+                        tempImage[x, y] = aboveThreshold;
+                    }
+                    else
+                    {
+                        tempImage[x, y] = belowThreshold;
+                    }
+                }
 
             return tempImage;
         }
