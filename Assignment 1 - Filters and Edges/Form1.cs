@@ -32,8 +32,7 @@ namespace INFOIBV
                 if (InputImage != null) InputImage.Dispose();               // reset image
                 InputImage = new Bitmap(file);                              // create new Bitmap from file
                 if (InputImage.Size.Height <= 0 || InputImage.Size.Width <= 0)
-                    //InputImage.Size.Height > 512 || InputImage.Size.Width > 512) // dimension check (may be removed or altered)
-                    MessageBox.Show("Error in image dimensions (have to be > 0 and <= 512)");
+                    MessageBox.Show("Error in image dimensions (have to be > 0");
                 else
                     pictureBox1.Image = (Image) InputImage;                 // display input image
             }
@@ -62,23 +61,25 @@ namespace INFOIBV
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
             //byte[,] invertedImage = invertImage(workingImage);
-            byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(5, 5);
+            //byte[,] contrastedImage = adjustContrast(workingImage);
+            float[,] GaussianFilter = createGaussianFilter(11, 11);
             //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
-            byte[,] MedianFilter = medianFilter(workingImage, 5);
-            byte[,] ThresholdFilter = thresholdImage(workingImage);
+            //byte[,] MedianFilter = medianFilter(workingImage, 5);
+            //byte[,] ThresholdFilter = thresholdImage(workingImage);
             float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
             float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
-            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ; 
+            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
+            byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
+            //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < EdgeMagnitudeImage.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < EdgeMagnitudeImage.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < pipelineB.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < pipelineB.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(EdgeMagnitudeImage[x, y], EdgeMagnitudeImage[x, y], EdgeMagnitudeImage[x, y]);
+                    Color newColor = Color.FromArgb(pipelineB[x, y], pipelineB[x, y], pipelineB[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -367,7 +368,7 @@ namespace INFOIBV
         {
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            byte threshold = 127;
+            byte threshold = 17;
             byte belowThreshold = 0;
             byte aboveThreshold = 255;
             // TODO: add your functionality and checks
