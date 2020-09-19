@@ -31,8 +31,8 @@ namespace INFOIBV
                 imageFileName.Text = file;                                  // show file name
                 if (InputImage != null) InputImage.Dispose();               // reset image
                 InputImage = new Bitmap(file);                              // create new Bitmap from file
-                if (InputImage.Size.Height <= 0 || InputImage.Size.Width <= 0 ||
-                    InputImage.Size.Height > 512 || InputImage.Size.Width > 512) // dimension check (may be removed or altered)
+                if (InputImage.Size.Height <= 0 || InputImage.Size.Width <= 0)
+                    //InputImage.Size.Height > 512 || InputImage.Size.Width > 512) // dimension check (may be removed or altered)
                     MessageBox.Show("Error in image dimensions (have to be > 0 and <= 512)");
                 else
                     pictureBox1.Image = (Image) InputImage;                 // display input image
@@ -64,18 +64,21 @@ namespace INFOIBV
             //byte[,] invertedImage = invertImage(workingImage);
             byte[,] contrastedImage = adjustContrast(workingImage);
             float[,] GaussianFilter = createGaussianFilter(5, 5);
-            byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
+            //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             byte[,] MedianFilter = medianFilter(workingImage, 5);
             byte[,] ThresholdFilter = thresholdImage(workingImage);
+            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ; 
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < ThresholdFilter.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < ThresholdFilter.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < EdgeMagnitudeImage.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < EdgeMagnitudeImage.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(ThresholdFilter[x, y], ThresholdFilter[x, y], ThresholdFilter[x, y]);
+                    Color newColor = Color.FromArgb(EdgeMagnitudeImage[x, y], EdgeMagnitudeImage[x, y], EdgeMagnitudeImage[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -246,24 +249,32 @@ namespace INFOIBV
             {
                 for (int y = 0; y < inputImage.GetLength(1); y++)            // loop over rows
                 {
-
+                    float pixelColor = 0;
                     for (int k = 0; k < kRows; k++)
                     {
-                        int kk = kRows - 1 - k;
+                        int xoffset = filterRadiusX - k;
+                        int xx = x + (xoffset);
+
                         for (int l = 0; l < kCols; l++)
                         {
-                            int ll = kCols - 1 - l;
+                            int yoffset= filterRadiusY - l;
 
-                            int xx = x + (filterRadiusX - kk);
-                            int yy = y + (filterRadiusY - ll);
+                            
+                            int yy = y + (yoffset);
 
                             if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height)
                             {
-                                tempImage[x, y] += Convert.ToByte(inputImage[xx, yy] * filter[kk, ll]);
+                                float colorval = inputImage[xx, yy];
+                                float scalar = filter[xoffset + filterRadiusX, yoffset + filterRadiusY];
+                                pixelColor += (colorval * scalar);
                             }
+                            /* //pixel zit te dicht bij de rand om de filter te kunnen gebruiken dus wordt op zwart gezet
+                            {
+                                tempImage[x, y] = 0;
+                            }*/
                         }
                     }
-
+                    tempImage[x,y] = Convert.ToByte(Math.Abs(pixelColor));
 
                 }
             }
@@ -324,12 +335,24 @@ namespace INFOIBV
          *          virticalKernel      vertical edge kernel
          * output:                      single-channel (byte) image
          */
-        private byte[,] edgeMagnitude(byte[,] inputImage, sbyte[,] horizontalKernel, sbyte[,] verticalKernel)
+        private byte[,] edgeMagnitude(byte[,] inputImage, float[,] horizontalKernel, float[,] verticalKernel)
         {
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
+            byte[,] Dx = convolveImage(inputImage, horizontalKernel);
+            byte[,] Dy = convolveImage(inputImage, verticalKernel);
+
             // TODO: add your functionality and checks, think about border handling and type conversion (negative values!)
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte Dxval = Dx[x,y];
+                    byte Dyval = Dy[x,y];
+                    byte Magnitude = (byte)Math.Sqrt((Dxval * Dxval) + (Dyval * Dyval));
+                    tempImage[x, y] = Magnitude;
+                }
+                
 
             return tempImage;
         }
