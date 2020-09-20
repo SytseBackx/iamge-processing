@@ -62,7 +62,7 @@ namespace INFOIBV
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
             //byte[,] invertedImage = invertImage(workingImage);
             //byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(11, 11);
+            float[,] GaussianFilter = createGaussianFilter(5, 5);
             //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             //byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
