@@ -60,17 +60,17 @@ namespace INFOIBV
             // ====================================================================
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
-            //byte[,] invertedImage = invertImage(workingImage);
-            //byte[,] contrastedImage = adjustContrast(workingImage);
+            byte[,] invertedImage = invertImage(workingImage);
+            byte[,] contrastedImage = adjustContrast(workingImage);
             float[,] GaussianFilter = createGaussianFilter(5, 5);
-            //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
-            //byte[,] MedianFilter = medianFilter(workingImage, 5);
-            //byte[,] ThresholdFilter = thresholdImage(workingImage);
+            byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
+            byte[,] MedianFilter = medianFilter(workingImage, 5);
+            byte[,] ThresholdFilter = thresholdImage(workingImage);
             float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
             float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
-            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
+            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
-            //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
+            byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -145,7 +145,6 @@ namespace INFOIBV
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
-            // TODO: add your functionality and checks
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
@@ -167,7 +166,6 @@ namespace INFOIBV
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
-            // TODO: add your functionality and checks
             byte newmin = 0; byte newmax = 255;
             List<byte> colors = new List<byte>();
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
@@ -186,7 +184,6 @@ namespace INFOIBV
                     byte pixelColor = inputImage[x, y];                    // get pixel color
                     tempImage[x,y] =Convert.ToByte((pixelColor - min) * ( (newmax - newmin) / (max - min)));
                 }
-            //peepeepoopoo
             return tempImage;
         }
 
@@ -202,7 +199,6 @@ namespace INFOIBV
             // create temporary grayscale image
             float[,] filter = new float[size, size];
 
-            // TODO: add your functionality and checks
             double filterSum = 0;
             int offset = (size - 1) / 2;
             double distance = 0;
@@ -240,7 +236,6 @@ namespace INFOIBV
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
-            // TODO: add your functionality and checks, think about border handling and type conversion
             int kRows = filter.GetLength(0);
             int kCols = filter.GetLength(1);
             int filterRadiusX = kRows / 2;
@@ -269,10 +264,7 @@ namespace INFOIBV
                                 float scalar = filter[xoffset + filterRadiusX, yoffset + filterRadiusY];
                                 pixelColor += (colorval * scalar);
                             }
-                            /* //pixel zit te dicht bij de rand om de filter te kunnen gebruiken dus wordt op zwart gezet
-                            {
-                                tempImage[x, y] = 0;
-                            }*/
+
                         }
                     }
                     tempImage[x,y] = Convert.ToByte(Math.Abs(pixelColor));
@@ -294,7 +286,6 @@ namespace INFOIBV
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
-            // TODO: add your functionality and checks, think about border handling and type conversion
             List<int> temp = new List<int>();
             int radius = (size - 1) / 2;
             for (int x = 0; x < inputImage.GetLength(0); x++)                 // loop over columns
@@ -344,7 +335,6 @@ namespace INFOIBV
             byte[,] Dx = convolveImage(inputImage, horizontalKernel);
             byte[,] Dy = convolveImage(inputImage, verticalKernel);
 
-            // TODO: add your functionality and checks, think about border handling and type conversion (negative values!)
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
