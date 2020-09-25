@@ -384,6 +384,105 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 2 GO HERE ==============
         // ====================================================================
 
+        private byte[,] createStructuringElement(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] erodeImage(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] dilateImage(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] openImage(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] closeImage(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] andImages(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+        private byte[,] orImages(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] countValues(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+        private byte[,] traceBoundary(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+
+
 
         // ====================================================================
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 3 GO HERE ==============
