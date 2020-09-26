@@ -65,21 +65,23 @@ namespace INFOIBV
             float[,] GaussianFilter = createGaussianFilter(5, 5);
             byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             byte[,] MedianFilter = medianFilter(workingImage, 5);
-            byte[,] ThresholdFilter = thresholdImage(workingImage);
-            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
-            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
-            byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
-            byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
+            //byte[,] ThresholdFilter = thresholdImage(workingImage);
+            //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
+            //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
+            //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
+            byte[,] strucElem = CreateStructuringElement("plus", 5);
+            byte[,] erodedImage = CloseImage(workingImage, strucElem);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
             // copy array to output Bitmap
-            for (int x = 0; x < pipelineB.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < pipelineB.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < erodedImage.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < erodedImage.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(pipelineB[x, y], pipelineB[x, y], pipelineB[x, y]);
+                    Color newColor = Color.FromArgb(erodedImage[x, y], erodedImage[x, y], erodedImage[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
             
@@ -384,7 +386,138 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 2 GO HERE ==============
         // ====================================================================
 
-        private byte[,] createStructuringElement(byte[,] inputImage)
+        private byte[,] CreateStructuringElement(string shape, int size)
+        {
+            byte[,] structuringElement = new byte[size, size];
+            switch (shape)
+            {
+                case "plus":
+                    int halfSize = size / 2;
+                    for (int x = 0; x < size; x++)
+                    {
+                        for (int y = 0; y < size; y++) {
+                            if (x == halfSize || y == halfSize)
+                            {
+                                structuringElement[x, y] = 1;
+                            }
+                        }
+                    }                     
+                    break;
+                case "square":
+                    for (int x = 0; x < size; x++)
+                    {
+                        for (int y = 0; y < size; y++)
+                        {
+                            structuringElement[x, y] = 1;
+                        }
+                    }
+                    break;
+
+            }
+            return structuringElement;
+                
+        }
+
+        private byte[,] ErodeImage(byte[,] inputImage,byte[,] structuringElement)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            int structuringElementWidth= structuringElement.GetLength(0);
+            int structuringElementheight = structuringElement.GetLength(1);
+            for (int x = 0; x < InputImage.Size.Width; x++) {                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte newVal = inputImage[x, y];
+                    for (int k = 0; k < structuringElementWidth; k++)
+                    {
+                        int xoffset = (structuringElementWidth / 2) - k;
+                        int xx = x + (xoffset);
+
+                        for (int l = 0; l < structuringElementheight; l++)
+                        {
+                            int yoffset = (structuringElementheight / 2) - l;
+
+                            int yy = y + (yoffset);
+
+                            if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && structuringElement[k, l] != 0)
+                            {
+
+                                if (inputImage[xx, yy] < newVal)
+                                {
+                                    newVal = inputImage[xx, yy];
+                                }
+
+                            }
+
+                        }
+                    }
+                    tempImage[x, y] = newVal;
+                }
+            }
+            return tempImage;
+        }
+
+        private byte[,] DilateImage(byte[,] inputImage, byte[,] structuringElement)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            int structuringElementWidth = structuringElement.GetLength(0);
+            int structuringElementheight = structuringElement.GetLength(1);
+            for (int x = 0; x < InputImage.Size.Width; x++)
+                    {                 // loop over columns
+                        for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                        {
+                            byte newVal = inputImage[x, y];
+                            for (int k = 0; k < structuringElementWidth; k++)
+                            {
+                                int xoffset = (structuringElementWidth / 2) - k;
+                                int xx = x + (xoffset);
+
+                                for (int l = 0; l < structuringElementheight; l++)
+                                {
+                                    int yoffset = (structuringElementheight / 2) - l;
+
+                                    int yy = y + (yoffset);
+
+                                    if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && structuringElement[k, l] != 0)
+                                    {
+
+                                        if (inputImage[xx, yy] > newVal)
+                                        {
+                                            newVal = inputImage[xx, yy];
+                                        }
+
+                                    }
+
+                                }
+                            }
+                            tempImage[x, y] = newVal;
+                        }
+                    }
+                    return tempImage;
+                
+        }
+
+        private byte[,] OpenImage(byte[,] inputImage, byte[,] SE)
+        {
+
+            return DilateImage(ErodeImage(inputImage, SE), SE);
+        }
+
+        private byte[,] CloseImage(byte[,] inputImage, byte[,] SE)
+        {
+            return ErodeImage(DilateImage(inputImage, SE), SE);
+        }
+
+        private byte[,] AndImages(byte[,] inputImage)
+        {
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+
+                }
+            return tempImage;
+        }
+        private byte[,] OrImages(byte[,] inputImage)
         {
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
@@ -395,7 +528,7 @@ namespace INFOIBV
             return tempImage;
         }
 
-        private byte[,] erodeImage(byte[,] inputImage)
+        private byte[,] CountValues(byte[,] inputImage)
         {
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
@@ -406,72 +539,7 @@ namespace INFOIBV
             return tempImage;
         }
 
-        private byte[,] dilateImage(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-
-        private byte[,] openImage(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-
-        private byte[,] closeImage(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-
-        private byte[,] andImages(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-        private byte[,] orImages(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-
-        private byte[,] countValues(byte[,] inputImage)
-        {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
-
-                }
-            return tempImage;
-        }
-
-        private byte[,] traceBoundary(byte[,] inputImage)
+        private byte[,] TraceBoundary(byte[,] inputImage)
         {
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
