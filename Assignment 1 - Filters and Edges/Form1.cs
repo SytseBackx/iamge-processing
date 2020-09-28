@@ -507,23 +507,83 @@ namespace INFOIBV
             return ErodeImage(DilateImage(inputImage, SE), SE);
         }
 
-        private byte[,] AndImages(byte[,] inputImage)
+        private byte[,] AndImages(byte[,] inputImage1, byte[,] inputImage2)
         {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
+            int inputWidth1 = inputImage1.GetLength(0);
+            int inputWidth2 = inputImage2.GetLength(0);
+            int tempWidth;
+            if (inputWidth1 > inputWidth2)
+            {
+                tempWidth = inputWidth1;
+            }
+            else
+            {
+                tempWidth = inputWidth2;
+            }
+            int inputHeight1 = inputImage1.GetLength(1);
+            int inputHeight2 = inputImage2.GetLength(1);
+            int tempHeight;
+            if (inputHeight1 > inputHeight2)
+            {
+                tempHeight = inputHeight1;
+            }
+            else
+            {
+                tempHeight = inputHeight2;
+            }
 
+            byte[,] tempImage = new byte[tempWidth,tempHeight];
+            for (int x = 0; x < tempWidth; x++)                 // loop over columns
+                for (int y = 0; y <tempHeight; y++)            // loop over rows
+                {
+                    if (inputImage1[x,y] == inputImage2[x, y])
+                    {
+                        tempImage[x, y] = inputImage1[x, y];
+                    }
+                    else
+                    {
+                        tempImage[x, y] = 0;
+                    }
                 }
             return tempImage;
         }
-        private byte[,] OrImages(byte[,] inputImage)
+        private byte[,] OrImages(byte[,] inputImage1, byte[,] inputImage2)
         {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+            int inputWidth1 = inputImage1.GetLength(0);
+            int inputWidth2 = inputImage2.GetLength(0);
+            int tempWidth;
+            if (inputWidth1 > inputWidth2) 
+            {
+                tempWidth = inputWidth1; 
+            }
+            else
+            {
+                tempWidth = inputWidth2;
+            }
+            int inputHeight1 = inputImage1.GetLength(1);
+            int inputHeight2 = inputImage2.GetLength(1);
+            int tempHeight;
+            if (inputHeight1 > inputHeight2)
+            {
+                tempHeight= inputHeight1;
+            }
+            else
+            {
+                tempHeight = inputHeight2;
+            }
+
+            byte[,] tempImage = new byte[tempWidth, tempHeight];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
-
+                    if (inputImage1[x, y] != 0 ||  inputImage2[x, y] != 0)
+                    {
+                        tempImage[x, y] = inputImage1[x, y];
+                    }
+                    else
+                    {
+                        tempImage[x, y] = 0;
+                    }
                 }
             return tempImage;
         }
