@@ -14,6 +14,7 @@ namespace INFOIBV
     {
         private Bitmap InputImage;
         private Bitmap OutputImage;
+        private int Dir = 0;
 
         public INFOIBV()
         {
@@ -71,21 +72,31 @@ namespace INFOIBV
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("plus", 5);
-            byte[,] erodedImage = CloseImage(workingImage, strucElem);
+            //byte[,] strucElem = CreateStructuringElement("plus", 5);
+            //byte[,] erodedImage = CloseImage(workingImage, strucElem);
+            byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
+            List<Point> points = TraceBoundary(binaryImage);
+            byte[,] bound = FillImageFromList(workingImage,points);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
+            Console.WriteLine("de volgende punten zitten in de boundary");
+            foreach(Point p in points)
+            {
+                Console.WriteLine("punt op " + p.X + "," + p.Y);
+            }
+
             // copy array to output Bitmap
-            for (int x = 0; x < erodedImage.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < erodedImage.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < bound.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < bound.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(erodedImage[x, y], erodedImage[x, y], erodedImage[x, y]);
+                    Color newColor = Color.FromArgb(bound[x, y], bound[x, y], bound[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
-            
+
             pictureBox2.Image = (Image)OutputImage;                         // display output image
+            
         }
 
 
@@ -623,15 +634,121 @@ namespace INFOIBV
             return hist;
         }
 
-        private byte[,] TraceBoundary(byte[,] inputImage)
+        private byte[,] CreateBinary(byte[,] inputImage)
         {
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
-                {
+            byte[,] tempImage = inputImage;
+            for (int x = 0; x < InputImage.Size.Width; x++)
+            {                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)
+                {             // loop over rows
+                    if (inputImage[x, y] > 127)
+                    {
+                        tempImage[x,y] = 1;
 
+                    }
+                    else
+                    {
+                        tempImage[x, y] =  0;
+                    }
                 }
+            }
             return tempImage;
+        }
+
+        private List<Point> TraceBoundary(byte[,] inputImage)
+
+        {
+            for (int x = 0; x < inputImage.GetLength(0); x++)
+            {                 // loop over columns
+                for (int y = 0; y < inputImage.GetLength(1); y++)
+                {
+                    if (inputImage[x,y] == 0 || inputImage[x,y] == 1)
+                    {
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("non binary image in the traceboundary");
+                    }
+                }
+            }
+            List<Point> emptyList = new List<Point>();
+            List<Point> boundary = emptyList;
+            for (int x = 0; x < inputImage.GetLength(0); x++) {                 // loop over columns
+                for (int y = 0; y < inputImage.GetLength(1); y++) {             // loop over rows
+                    int value = inputImage[x, y];
+                    if (value == 1)
+                    {
+                        boundary = WalkBoundary(inputImage, x, y);
+                        break;
+                    }
+                }
+                if(boundary != emptyList)
+                {
+                    break;
+                }
+            }
+            return boundary;
+        }
+        private List<Point> WalkBoundary(byte[,] inputImage, int xS, int yS) { 
+            List<Point> boundary = new List<Point>();
+            int xT, yT;//T= successor of starting point (xS,yS)
+            int xP, yP;//P= previous contour point
+            int xC, yC;//C= current contour point
+
+            Point pt = new Point(xS, yS);
+            boundary.Add(pt);
+            Point ptN = findNextPoint(inputImage, pt);
+            int xN = ptN.X, yN = ptN.Y; //N = new point
+            xC = xT = xN;
+            yC = yT = yN;
+            Boolean done = (pt == ptN); // true if isolated pixel
+            while (!done) {
+                pt = new Point(xC, yC);
+                Dir += 6;
+                Dir %= 8;
+                ptN = findNextPoint(inputImage, pt);
+
+                xP = xC; yP = yC; 
+                xC = ptN.X; yC = ptN.Y; 
+                // are we back at the starting position?
+                done = (xP==xS && yP==yS && xC==xT && yC==yT);
+                if (!done) {
+                    boundary.Add(pt);
+                }
+            }
+            return boundary;
+        
+        }
+        Point findNextPoint(byte[,] inputImage, Point pt)
+        {
+            // starts at Pointptin directiondir,returns the
+            // final tracing direction, and modifiespt
+            int[,] delta = new int[,] {
+                { 1,0}, { 1, 1}, {0, 1}, {-1, 1},
+                {-1,0}, {-1,-1}, {0,-1}, { 1,-1}};
+            for (int i = 0; i < 7; i++) {
+                int x = pt.X + delta[Dir,0];
+                int y = pt.Y + delta[Dir,1];
+                if (inputImage[x,y] == 0) {
+                    Dir = (Dir + 1) % 8;
+                }
+                else {// found a nonbackground pixel
+                    return new Point(x, y);
+                }
+            }
+            return pt;
+        }
+
+        private byte[,] FillImageFromList(byte[,] inputImage, List<Point> points)
+        {
+            byte[,] newImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+
+            foreach(Point p in points)
+            {
+                newImage[p.X, p.Y] = 255;
+            }
+            return newImage;
         }
 
 
@@ -640,5 +757,5 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 3 GO HERE ==============
         // ====================================================================
 
-    }
+        }
 }
