@@ -588,15 +588,39 @@ namespace INFOIBV
             return tempImage;
         }
 
-        private byte[,] CountValues(byte[,] inputImage)
+        struct Histogram
         {
+            public int values;
+            public byte[] histogram;
+        }
+
+        private Histogram CountValues(byte[,] inputImage)
+        {
+            Histogram hist = new Histogram();
+            byte[] histogram = new byte[256];                               //create an array that is the same size as all pixel values within range
+            for (int i = 0; i < 256; i++)
+                histogram[i] = 0;                                           //set each value to 0. at this moment each value has occurred 0 times.
+
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
 
+                    byte value = tempImage[x, y];
+                    histogram[value] = (byte)(histogram[value] + 1);
                 }
-            return tempImage;
+
+            int indistinctValues = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                if (histogram[i] == 0)
+                    indistinctValues += 1;
+            }
+
+            hist.values = indistinctValues;
+            hist.histogram = histogram;
+
+            return hist;
         }
 
         private byte[,] TraceBoundary(byte[,] inputImage)
