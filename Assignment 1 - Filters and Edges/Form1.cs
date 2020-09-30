@@ -61,23 +61,26 @@ namespace INFOIBV
             // ====================================================================
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
-            byte[,] invertedImage = invertImage(workingImage);
-            byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(5, 5);
-            byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
-            byte[,] MedianFilter = medianFilter(workingImage, 5);
+            //byte[,] invertedImage = invertImage(workingImage);
+            //byte[,] contrastedImage = adjustContrast(workingImage);
+            //float[,] GaussianFilter = createGaussianFilter(5, 5);
+            //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
+            //byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("plus", 3);
-            //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
-            List<Point> points = TraceBoundary(binaryImage,strucElem);
-            byte[,] bound = FillImageFromList(workingImage,points);
-            byte[,] output = bound;
+            byte[,] strucElem = CreateStructuringElement("square", 3);
+            byte[,] erodedImage = invertImage(ErodeImage(workingImage, strucElem));
+            //byte[,] binaryImage = CreateBinary( workingImage);//CreateBinary(invertImage( workingImage));
+            byte[,] DilatedImage = DilateImage(workingImage, strucElem);
+            //List<Point> points = TraceBoundary(binaryImage,strucElem);
+            //byte[,] bound = FillImageFromList(workingImage,points);
+            byte[,] andImage = AndImages(DilatedImage, erodedImage);
+            //Histogram values = CountValues(workingImage);
+            byte[,] output = visualiseBinary(andImage);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -610,27 +613,27 @@ namespace INFOIBV
         {
             Histogram hist = new Histogram();
             byte[] histogram = new byte[256];                               //create an array that is the same size as all pixel values within range
-            for (int i = 0; i < 256; i++)
+            for (int i = 0; i < histogram.Length; i++)
                 histogram[i] = 0;                                           //set each value to 0. at this moment each value has occurred 0 times.
 
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
-
-                    byte value = tempImage[x, y];
+                    byte value = inputImage[x, y];
                     histogram[value] = (byte)(histogram[value] + 1);
                 }
 
             int indistinctValues = 0;
             for (int i = 0; i < 256; i++)
             {
-                if (histogram[i] == 0)
+                if (histogram[i] != 0)
                     indistinctValues += 1;
             }
 
             hist.values = indistinctValues;
             hist.histogram = histogram;
+            Console.WriteLine(hist.values);
+            Console.WriteLine(hist.histogram);
 
             return hist;
         }
@@ -650,6 +653,23 @@ namespace INFOIBV
                     else
                     {
                         tempImage[x, y] =  0;
+                    }
+                }
+            }
+            return tempImage;
+        }
+
+        private byte[,] visualiseBinary(byte[,] inputImage)
+        {
+            byte[,] tempImage = inputImage;
+            for (int x = 0; x < InputImage.Size.Width; x++)
+            {                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)
+                {             // loop over rows
+                    if (inputImage[x, y] == 1)
+                    {
+                        tempImage[x, y] = 255;
+
                     }
                 }
             }
