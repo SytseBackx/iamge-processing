@@ -67,8 +67,8 @@ namespace INFOIBV
             byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
@@ -77,21 +77,22 @@ namespace INFOIBV
             byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
             List<Point> points = TraceBoundary(binaryImage,strucElem);
             byte[,] bound = FillImageFromList(workingImage,points);
+            byte[,] output = bound;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
-            Console.WriteLine("de volgende punten zitten in de boundary");
+            /*Console.WriteLine("de volgende punten zitten in de boundary");
             foreach(Point p in points)
             {
                 Console.WriteLine("punt op " + p.X + "," + p.Y);
-            }
+            }*/
 
             // copy array to output Bitmap
-            for (int x = 0; x < bound.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < bound.GetLength(1); y++)         // loop over rows
+            for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
                 {
-                    Color newColor = Color.FromArgb(bound[x, y], bound[x, y], bound[x, y]);
+                    Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
                 }
 
