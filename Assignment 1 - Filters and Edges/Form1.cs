@@ -611,7 +611,7 @@ namespace INFOIBV
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
 
-                    byte value = InputImage[x, y];
+                    byte value = inputImage[x, y];
                     histogram[value] = (byte)(histogram[value] + 1);
                 }
 
