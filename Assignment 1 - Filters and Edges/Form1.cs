@@ -607,19 +607,18 @@ namespace INFOIBV
             for (int i = 0; i < 256; i++)
                 histogram[i] = 0;                                           //set each value to 0. at this moment each value has occurred 0 times.
 
-            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
 
-                    byte value = tempImage[x, y];
+                    byte value = InputImage[x, y];
                     histogram[value] = (byte)(histogram[value] + 1);
                 }
 
             int indistinctValues = 0;
             for (int i = 0; i < 256; i++)
             {
-                if (histogram[i] == 0)
+                if (histogram[i] != 0)
                     indistinctValues += 1;
             }
 
