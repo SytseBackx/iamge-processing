@@ -67,26 +67,21 @@ namespace INFOIBV
             byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("plus", 3);
+            byte[,] strucElem = CreateStructuringElement("square", 63);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
-            List<Point> points = TraceBoundary(binaryImage,strucElem);
-            byte[,] bound = FillImageFromList(workingImage,points);
-            byte[,] output = bound;
+            //byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
+            //List<Point> points = TraceBoundary(binaryImage,strucElem);
+            //byte[,] bound = FillImageFromList(workingImage,points);
+            byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
+            byte[,] output = openImage;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
-
-            /*Console.WriteLine("de volgende punten zitten in de boundary");
-            foreach(Point p in points)
-            {
-                Console.WriteLine("punt op " + p.X + "," + p.Y);
-            }*/
 
             // copy array to output Bitmap
             for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
@@ -473,8 +468,7 @@ namespace INFOIBV
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             int structuringElementWidth = structuringElement.GetLength(0);
             int structuringElementheight = structuringElement.GetLength(1);
-            for (int x = 0; x < InputImage.Size.Width; x++)
-                    {                 // loop over columns
+            for (int x = 0; x < InputImage.Size.Width; x++){                 // loop over columns
                         for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                         {
                             byte newVal = inputImage[x, y];
@@ -753,7 +747,7 @@ namespace INFOIBV
 
                                 int yy = y + (yoffset);
 
-                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) //found a pixel which is also a border pixel
+                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) //found i pixel withing the struct which is also foreground.
                                 {
                                     if (inputImage[xx, yy] == 0)
                                     {
