@@ -61,26 +61,26 @@ namespace INFOIBV
             // ====================================================================
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
-            byte[,] invertedImage = invertImage(workingImage);
-            byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(5, 5);
-            byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
-            byte[,] MedianFilter = medianFilter(workingImage, 5);
+            //byte[,] invertedImage = invertImage(workingImage);
+            //byte[,] contrastedImage = adjustContrast(workingImage);
+            //float[,] GaussianFilter = createGaussianFilter(5, 5);
+            //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
+            //byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
             //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
             //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("square", 3);
-            byte[,] erodedImage = ErodeImage(workingImage, strucElem);
-            byte[,] dilatedImage = DilateImage(workingImage,strucElem);
+            //byte[,] strucElem = CreateStructuringElement("plus", 19);
+            //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
+            //byte[,] erodedImage = CloseImage(workingImage, strucElem);
             //byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
             //List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
-            byte[,] andImage = AndImages(invertImage(erodedImage),dilatedImage);
-            byte[,] output = andImage;
+            Histogram values = CountValues(workingImage);
+            byte[,] output = workingImage;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -626,6 +626,7 @@ namespace INFOIBV
 
             hist.values = indistinctValues;
             hist.histogram = histogram;
+            Console.WriteLine(hist.values);
 
             return hist;
         }
