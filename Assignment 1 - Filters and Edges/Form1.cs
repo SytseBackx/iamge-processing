@@ -72,13 +72,15 @@ namespace INFOIBV
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("square", 63);
-            //byte[,] erodedImage = CloseImage(workingImage, strucElem);
+            byte[,] strucElem = CreateStructuringElement("square", 3);
+            byte[,] erodedImage = ErodeImage(workingImage, strucElem);
+            byte[,] dilatedImage = DilateImage(workingImage,strucElem);
             //byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
             //List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
-            byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
-            byte[,] output = openImage;
+            //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
+            byte[,] andImage = AndImages(invertImage(erodedImage),dilatedImage);
+            byte[,] output = andImage;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -611,7 +613,7 @@ namespace INFOIBV
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
 
-                    byte value = InputImage[x, y];
+                    byte value = inputImage[x, y];
                     histogram[value] = (byte)(histogram[value] + 1);
                 }
 
@@ -693,7 +695,7 @@ namespace INFOIBV
             Point pt = new Point(xS, yS);
             boundary.Add(pt);
             Point ptN = findNextPoint(inputImage, pt, strucElem);
-            int xN = ptN.X, yN = ptN.Y; //N = new point
+            int xN = ptN.X, yN = ptN.Y; //N = new contour point
             xC = xT = xN;
             yC = yT = yN;
             Boolean done = (pt == ptN); // true if isolated pixel
@@ -746,9 +748,9 @@ namespace INFOIBV
 
                                 int yy = y + (yoffset);
 
-                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) //found i pixel withing the struct which is also foreground.
+                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) 
                                 {
-                                    if (inputImage[xx, yy] == 0)
+                                    if (inputImage[xx, yy] == 0)//the non background pixel has a neighbour which is background, therefore it is an egde pixel
                                     {
                                         return new Point(x, y);
                                     }
@@ -766,7 +768,7 @@ namespace INFOIBV
             return pt;
         }
 
-        private byte[,] FillImageFromList(byte[,] inputImage, List<Point> points)
+        private byte[,] FillImageFromList(byte[,] inputImage, List<Point> points) //used to visualise the outline obtained from TraceBoundary
         {
             byte[,] newImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
