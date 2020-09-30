@@ -72,10 +72,10 @@ namespace INFOIBV
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            //byte[,] strucElem = CreateStructuringElement("plus", 5);
+            byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
             byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
-            List<Point> points = TraceBoundary(binaryImage);
+            List<Point> points = TraceBoundary(binaryImage,strucElem);
             byte[,] bound = FillImageFromList(workingImage,points);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
@@ -655,7 +655,7 @@ namespace INFOIBV
             return tempImage;
         }
 
-        private List<Point> TraceBoundary(byte[,] inputImage)
+        private List<Point> TraceBoundary(byte[,] inputImage, byte[,] strucElem)
 
         {
             for (int x = 0; x < inputImage.GetLength(0); x++)
@@ -679,7 +679,7 @@ namespace INFOIBV
                     int value = inputImage[x, y];
                     if (value == 1)
                     {
-                        boundary = WalkBoundary(inputImage, x, y);
+                        boundary = WalkBoundary(inputImage, x, y, strucElem);
                         break;
                     }
                 }
@@ -690,7 +690,7 @@ namespace INFOIBV
             }
             return boundary;
         }
-        private List<Point> WalkBoundary(byte[,] inputImage, int xS, int yS) { 
+        private List<Point> WalkBoundary(byte[,] inputImage, int xS, int yS, byte[,] strucElem) { 
             List<Point> boundary = new List<Point>();
             int xT, yT;//T= successor of starting point (xS,yS)
             int xP, yP;//P= previous contour point
@@ -698,7 +698,7 @@ namespace INFOIBV
 
             Point pt = new Point(xS, yS);
             boundary.Add(pt);
-            Point ptN = findNextPoint(inputImage, pt);
+            Point ptN = findNextPoint(inputImage, pt, strucElem);
             int xN = ptN.X, yN = ptN.Y; //N = new point
             xC = xT = xN;
             yC = yT = yN;
@@ -707,7 +707,7 @@ namespace INFOIBV
                 pt = new Point(xC, yC);
                 Dir += 6;
                 Dir %= 8;
-                ptN = findNextPoint(inputImage, pt);
+                ptN = findNextPoint(inputImage, pt, strucElem);
 
                 xP = xC; yP = yC; 
                 xC = ptN.X; yC = ptN.Y; 
@@ -720,22 +720,54 @@ namespace INFOIBV
             return boundary;
         
         }
-        Point findNextPoint(byte[,] inputImage, Point pt)
+        Point findNextPoint(byte[,] inputImage, Point pt, byte[,] strucElem)
         {
-            // starts at Pointptin directiondir,returns the
-            // final tracing direction, and modifiespt
+            int structuringElementWidth = strucElem.GetLength(0);
+            int structuringElementheight = strucElem.GetLength(1);
+
             int[,] delta = new int[,] {
                 { 1,0}, { 1, 1}, {0, 1}, {-1, 1},
                 {-1,0}, {-1,-1}, {0,-1}, { 1,-1}};
+
+
             for (int i = 0; i < 7; i++) {
                 int x = pt.X + delta[Dir,0];
                 int y = pt.Y + delta[Dir,1];
-                if (inputImage[x,y] == 0) {
-                    Dir = (Dir + 1) % 8;
+                if (x >= 0 && x < InputImage.Size.Width && y >= 0 && y < InputImage.Size.Height){
+                    if (inputImage[x, y] == 0)
+                    {
+                        Dir = (Dir + 1) % 8;
+                    }
+                    else
+                    {// found a nonbackground pixel
+
+                        for (int k = 0; k < structuringElementWidth; k++)
+                        {
+                            int xoffset = (structuringElementWidth / 2) - k;
+                            int xx = x + (xoffset);
+
+                            for (int l = 0; l < structuringElementheight; l++)
+                            {
+                                int yoffset = (structuringElementheight / 2) - l;
+
+                                int yy = y + (yoffset);
+
+                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) //found a pixel which is also a border pixel
+                                {
+                                    if (inputImage[xx, yy] == 0)
+                                    {
+                                        return new Point(x, y);
+                                    }
+
+                                }
+
+
+                            }
+                        }
+                        Dir = (Dir + 1) % 8;
+                    }
                 }
-                else {// found a nonbackground pixel
-                    return new Point(x, y);
-                }
+
             }
             return pt;
         }
