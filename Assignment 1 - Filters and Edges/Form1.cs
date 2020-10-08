@@ -26,7 +26,7 @@ namespace INFOIBV
          */
         private void loadImageButton_Click(object sender, EventArgs e)
         {
-           if (openImageDialog.ShowDialog() == DialogResult.OK)             // open file dialog
+            if (openImageDialog.ShowDialog() == DialogResult.OK)             // open file dialog
             {
                 string file = openImageDialog.FileName;                     // get the file name
                 imageFileName.Text = file;                                  // show file name
@@ -35,7 +35,7 @@ namespace INFOIBV
                 if (InputImage.Size.Height <= 0 || InputImage.Size.Width <= 0)
                     MessageBox.Show("Error in image dimensions (have to be > 0");
                 else
-                    pictureBox1.Image = (Image) InputImage;                 // display input image
+                    pictureBox1.Image = (Image)InputImage;                 // display input image
             }
         }
 
@@ -47,7 +47,7 @@ namespace INFOIBV
         {
             if (InputImage == null) return;                                 // get out if no input image
             if (OutputImage != null) OutputImage.Dispose();                 // reset output image
-            OutputImage = new Bitmap(InputImage.Size.Width, InputImage.Size.Height); // create new output image
+           
             Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
 
             // copy input Bitmap to array            
@@ -72,19 +72,22 @@ namespace INFOIBV
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            //byte[,] strucElem = CreateStructuringElement("plus", 19);
+            byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            //byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
-            //List<Point> points = TraceBoundary(binaryImage,strucElem);
+            byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
+            List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
+            //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
+            //int[,] test = rthetaImage;
             Histogram values = CountValues(workingImage);
-            byte[,] output = workingImage;
+            byte[,] output = HoughTransform(FillImageFromList(workingImage, points));
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
+            OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
             // copy array to output Bitmap
             for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
                 for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
@@ -94,7 +97,7 @@ namespace INFOIBV
                 }
 
             pictureBox2.Image = (Image)OutputImage;                         // display output image
-            
+
         }
 
 
@@ -161,7 +164,7 @@ namespace INFOIBV
                 {
                     byte pixelColor = inputImage[x, y];                    // get pixel color
                     byte invertedColor = (byte)(~pixelColor);
-                    tempImage[x,y] = invertedColor;
+                    tempImage[x, y] = invertedColor;
                 }
             return tempImage;
         }
@@ -193,7 +196,7 @@ namespace INFOIBV
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
                     byte pixelColor = inputImage[x, y];                    // get pixel color
-                    tempImage[x,y] =Convert.ToByte((pixelColor - min) * ( (newmax - newmin) / (max - min)));
+                    tempImage[x, y] = Convert.ToByte((pixelColor - min) * ((newmax - newmin) / (max - min)));
                 }
             return tempImage;
         }
@@ -219,7 +222,7 @@ namespace INFOIBV
                 for (int x = -offset; x <= offset; x++)
                 {
                     distance = ((y * y) + (x * x)) / (2 * sigma * sigma);
-                    filter[y + offset, x + offset] = Convert.ToSingle( constant * Math.Exp(-distance));
+                    filter[y + offset, x + offset] = Convert.ToSingle(constant * Math.Exp(-distance));
                     filterSum += filter[y + offset, x + offset];
                 }
             }
@@ -264,9 +267,9 @@ namespace INFOIBV
 
                         for (int l = 0; l < kCols; l++)
                         {
-                            int yoffset= filterRadiusY - l;
+                            int yoffset = filterRadiusY - l;
 
-                            
+
                             int yy = y + (yoffset);
 
                             if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height)
@@ -278,7 +281,7 @@ namespace INFOIBV
 
                         }
                     }
-                    tempImage[x,y] = Convert.ToByte(Math.Abs(pixelColor));
+                    tempImage[x, y] = Convert.ToByte(Math.Abs(pixelColor));
 
                 }
             }
@@ -306,10 +309,10 @@ namespace INFOIBV
 
                     for (int k = -radius; k <= radius; k++)
                     {
-                       
+
                         for (int l = -radius; l <= radius; l++)
                         {
-                           
+
 
                             int xx = x + k;
                             int yy = y + l;
@@ -349,12 +352,12 @@ namespace INFOIBV
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
-                    byte Dxval = Dx[x,y];
-                    byte Dyval = Dy[x,y];
+                    byte Dxval = Dx[x, y];
+                    byte Dyval = Dy[x, y];
                     byte Magnitude = (byte)Math.Sqrt((Dxval * Dxval) + (Dyval * Dyval));
                     tempImage[x, y] = Magnitude;
                 }
-                
+
 
             return tempImage;
         }
@@ -365,16 +368,15 @@ namespace INFOIBV
          * input:   inputImage          single-channel (byte) image
          * output:                      single-channel (byte) image with on/off values
          */
-        private byte[,] thresholdImage(byte[,] inputImage)
+        private byte[,] thresholdImage(byte[,] inputImage, byte threshold)
         {
             // create temporary grayscale image
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            byte threshold = 17;
             byte belowThreshold = 0;
             byte aboveThreshold = 255;
             // TODO: add your functionality and checks
-            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
-                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+            for (int x = 0; x < inputImage.GetLength(0); x++)                 // loop over columns
+                for (int y = 0; y < inputImage.GetLength(1); y++)            // loop over rows
                 {
                     byte pixelColor = inputImage[x, y];                    // get pixel color
                     if (pixelColor > threshold)
@@ -390,7 +392,7 @@ namespace INFOIBV
             return tempImage;
         }
 
-        
+
         // ====================================================================
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 2 GO HERE ==============
         // ====================================================================
@@ -404,13 +406,14 @@ namespace INFOIBV
                     int halfSize = size / 2;
                     for (int x = 0; x < size; x++)
                     {
-                        for (int y = 0; y < size; y++) {
+                        for (int y = 0; y < size; y++)
+                        {
                             if (x == halfSize || y == halfSize)
                             {
                                 structuringElement[x, y] = 1;
                             }
                         }
-                    }                     
+                    }
                     break;
                 case "square":
                     for (int x = 0; x < size; x++)
@@ -424,15 +427,16 @@ namespace INFOIBV
 
             }
             return structuringElement;
-                
+
         }
 
-        private byte[,] ErodeImage(byte[,] inputImage,byte[,] structuringElement)
+        private byte[,] ErodeImage(byte[,] inputImage, byte[,] structuringElement)
         {
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
-            int structuringElementWidth= structuringElement.GetLength(0);
+            int structuringElementWidth = structuringElement.GetLength(0);
             int structuringElementheight = structuringElement.GetLength(1);
-            for (int x = 0; x < InputImage.Size.Width; x++) {                 // loop over columns
+            for (int x = 0; x < InputImage.Size.Width; x++)
+            {                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
                     byte newVal = inputImage[x, y];
@@ -470,38 +474,39 @@ namespace INFOIBV
             byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
             int structuringElementWidth = structuringElement.GetLength(0);
             int structuringElementheight = structuringElement.GetLength(1);
-            for (int x = 0; x < InputImage.Size.Width; x++){                 // loop over columns
-                        for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+            for (int x = 0; x < InputImage.Size.Width; x++)
+            {                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte newVal = inputImage[x, y];
+                    for (int k = 0; k < structuringElementWidth; k++)
+                    {
+                        int xoffset = (structuringElementWidth / 2) - k;
+                        int xx = x + (xoffset);
+
+                        for (int l = 0; l < structuringElementheight; l++)
                         {
-                            byte newVal = inputImage[x, y];
-                            for (int k = 0; k < structuringElementWidth; k++)
+                            int yoffset = (structuringElementheight / 2) - l;
+
+                            int yy = y + (yoffset);
+
+                            if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && structuringElement[k, l] != 0)
                             {
-                                int xoffset = (structuringElementWidth / 2) - k;
-                                int xx = x + (xoffset);
 
-                                for (int l = 0; l < structuringElementheight; l++)
+                                if (inputImage[xx, yy] > newVal)
                                 {
-                                    int yoffset = (structuringElementheight / 2) - l;
-
-                                    int yy = y + (yoffset);
-
-                                    if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && structuringElement[k, l] != 0)
-                                    {
-
-                                        if (inputImage[xx, yy] > newVal)
-                                        {
-                                            newVal = inputImage[xx, yy];
-                                        }
-
-                                    }
-
+                                    newVal = inputImage[xx, yy];
                                 }
+
                             }
-                            tempImage[x, y] = newVal;
+
                         }
                     }
-                    return tempImage;
-                
+                    tempImage[x, y] = newVal;
+                }
+            }
+            return tempImage;
+
         }
 
         private byte[,] OpenImage(byte[,] inputImage, byte[,] SE)
@@ -540,11 +545,11 @@ namespace INFOIBV
                 tempHeight = inputHeight2;
             }
 
-            byte[,] tempImage = new byte[tempWidth,tempHeight];
+            byte[,] tempImage = new byte[tempWidth, tempHeight];
             for (int x = 0; x < tempWidth; x++)                 // loop over columns
-                for (int y = 0; y <tempHeight; y++)            // loop over rows
+                for (int y = 0; y < tempHeight; y++)            // loop over rows
                 {
-                    if (inputImage1[x,y] == inputImage2[x, y])
+                    if (inputImage1[x, y] == inputImage2[x, y])
                     {
                         tempImage[x, y] = inputImage1[x, y];
                     }
@@ -560,9 +565,9 @@ namespace INFOIBV
             int inputWidth1 = inputImage1.GetLength(0);
             int inputWidth2 = inputImage2.GetLength(0);
             int tempWidth;
-            if (inputWidth1 > inputWidth2) 
+            if (inputWidth1 > inputWidth2)
             {
-                tempWidth = inputWidth1; 
+                tempWidth = inputWidth1;
             }
             else
             {
@@ -573,7 +578,7 @@ namespace INFOIBV
             int tempHeight;
             if (inputHeight1 > inputHeight2)
             {
-                tempHeight= inputHeight1;
+                tempHeight = inputHeight1;
             }
             else
             {
@@ -584,7 +589,7 @@ namespace INFOIBV
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                 {
-                    if (inputImage1[x, y] != 0 ||  inputImage2[x, y] != 0)
+                    if (inputImage1[x, y] != 0 || inputImage2[x, y] != 0)
                     {
                         tempImage[x, y] = inputImage1[x, y];
                     }
@@ -640,12 +645,12 @@ namespace INFOIBV
                 {             // loop over rows
                     if (inputImage[x, y] > 127)
                     {
-                        tempImage[x,y] = 1;
+                        tempImage[x, y] = 1;
 
                     }
                     else
                     {
-                        tempImage[x, y] =  0;
+                        tempImage[x, y] = 0;
                     }
                 }
             }
@@ -659,7 +664,7 @@ namespace INFOIBV
             {                 // loop over columns
                 for (int y = 0; y < inputImage.GetLength(1); y++)
                 {
-                    if (inputImage[x,y] == 0 || inputImage[x,y] == 1)
+                    if (inputImage[x, y] == 0 || inputImage[x, y] == 1)
                     {
 
                     }
@@ -671,8 +676,10 @@ namespace INFOIBV
             }
             List<Point> emptyList = new List<Point>();
             List<Point> boundary = emptyList;
-            for (int x = 0; x < inputImage.GetLength(0); x++) {                 // loop over columns
-                for (int y = 0; y < inputImage.GetLength(1); y++) {             // loop over rows
+            for (int x = 0; x < inputImage.GetLength(0); x++)
+            {                 // loop over columns
+                for (int y = 0; y < inputImage.GetLength(1); y++)
+                {             // loop over rows
                     int value = inputImage[x, y];
                     if (value == 1)
                     {
@@ -680,14 +687,15 @@ namespace INFOIBV
                         break;
                     }
                 }
-                if(boundary != emptyList)
+                if (boundary != emptyList)
                 {
                     break;
                 }
             }
             return boundary;
         }
-        private List<Point> WalkBoundary(byte[,] inputImage, int xS, int yS, byte[,] strucElem) { 
+        private List<Point> WalkBoundary(byte[,] inputImage, int xS, int yS, byte[,] strucElem)
+        {
             List<Point> boundary = new List<Point>();
             int xT, yT;//T= successor of starting point (xS,yS)
             int xP, yP;//P= previous contour point
@@ -700,22 +708,24 @@ namespace INFOIBV
             xC = xT = xN;
             yC = yT = yN;
             Boolean done = (pt == ptN); // true if isolated pixel
-            while (!done) {
+            while (!done)
+            {
                 pt = new Point(xC, yC);
                 Dir += 6;
                 Dir %= 8;
                 ptN = findNextPoint(inputImage, pt, strucElem);
 
-                xP = xC; yP = yC; 
-                xC = ptN.X; yC = ptN.Y; 
+                xP = xC; yP = yC;
+                xC = ptN.X; yC = ptN.Y;
                 // are we back at the starting position?
-                done = (xP==xS && yP==yS && xC==xT && yC==yT);
-                if (!done) {
+                done = (xP == xS && yP == yS && xC == xT && yC == yT);
+                if (!done)
+                {
                     boundary.Add(pt);
                 }
             }
             return boundary;
-        
+
         }
         Point findNextPoint(byte[,] inputImage, Point pt, byte[,] strucElem)
         {
@@ -727,10 +737,12 @@ namespace INFOIBV
                 {-1,0}, {-1,-1}, {0,-1}, { 1,-1}};
 
 
-            for (int i = 0; i < 7; i++) {
-                int x = pt.X + delta[Dir,0];
-                int y = pt.Y + delta[Dir,1];
-                if (x >= 0 && x < InputImage.Size.Width && y >= 0 && y < InputImage.Size.Height){
+            for (int i = 0; i < 7; i++)
+            {
+                int x = pt.X + delta[Dir, 0];
+                int y = pt.Y + delta[Dir, 1];
+                if (x >= 0 && x < InputImage.Size.Width && y >= 0 && y < InputImage.Size.Height)
+                {
                     if (inputImage[x, y] == 0)
                     {
                         Dir = (Dir + 1) % 8;
@@ -749,7 +761,7 @@ namespace INFOIBV
 
                                 int yy = y + (yoffset);
 
-                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0) 
+                                if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height && strucElem[k, l] != 0)
                                 {
                                     if (inputImage[xx, yy] == 0)//the non background pixel has a neighbour which is background, therefore it is an egde pixel
                                     {
@@ -773,7 +785,7 @@ namespace INFOIBV
         {
             byte[,] newImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
 
-            foreach(Point p in points)
+            foreach (Point p in points)
             {
                 newImage[p.X, p.Y] = 255;
             }
@@ -786,5 +798,62 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 3 GO HERE ==============
         // ====================================================================
 
+        //The input image should be a binary image in which the edge values are 255
+
+        new private byte[,] HoughTransform(byte[,] inputImage)
+        {
+            int thetaMax = 180; // maximum value of theta in degrees
+            int diagonalSize = (int)Math.Sqrt((inputImage.GetLength(0) * inputImage.GetLength(0)) + (inputImage.GetLength(1) * inputImage.GetLength(1)));
+            byte[,] rThetaImage = new byte[thetaMax, diagonalSize * 2];
+            int[,] rValues = new int[inputImage.GetLength(0), inputImage.GetLength(1)];
+            int rMax = int.MaxValue;
+            int rMin = int.MinValue;
+            int maxIndex,minIndex;
+
+            for (int x = 0; x < InputImage.Size.Width; x++) // loop over columns
+            {
+                for (int y = 0; y < InputImage.Size.Height; y++) // loop over rows
+                {
+                   
+                    if (inputImage[x, y] == 255)
+                    {
+                        byte AverageR = 0;
+                        for (int theta = 0; theta < thetaMax; theta++) // loop over angle values
+                        {
+                            float thetaRadians = (theta * (float)Math.PI) / thetaMax;
+                            int r = (int)((x  * Math.Cos(thetaRadians)) + (( inputImage.GetLength(1) - y) * Math.Sin(thetaRadians)));
+                            rThetaImage[theta, r + (diagonalSize)] += 10;
+
+                            byte rGreyScale = (byte)((r * (127f/707f))+127);
+                            rValues[x, y] = rGreyScale;
+                            AverageR += rGreyScale;
+                            //AverageR += rGreyScale;
+                            if (r > rMax)
+                            {
+                                rMax = r;
+                            }
+                            if (r < rMax)
+                            {
+                                rMin = r;
+                            }
+                        }
+                        //rValues[x, y] = rMin;
+                        //rMin = 0;
+                    }
+                    
+                    /*else
+                    {
+                        rValues[x,y] = (byte)127;
+                    }*/
+                }
+            }
+            for (int n = 0; n > thetaMax; n++) {
+                for (int m = 0; m > rThetaImage.GetLength(1); m++)
+                {
+
+                }
+            }
+            return rThetaImage;
         }
+    }
 }
