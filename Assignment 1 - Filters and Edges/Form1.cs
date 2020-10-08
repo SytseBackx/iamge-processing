@@ -79,10 +79,10 @@ namespace INFOIBV
             List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
-            //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
-            //int[,] test = rthetaImage;
-            Histogram values = CountValues(workingImage);
-            byte[,] output = HoughTransform(FillImageFromList(workingImage, points));
+            int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
+            int[,] test = HoughPeakFinding(rthetaImage, 10);
+            //Histogram values = CountValues(workingImage);
+            byte[,] output = CloseImage(workingImage, strucElem); ;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -798,62 +798,68 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 3 GO HERE ==============
         // ====================================================================
 
-        //The input image should be a binary image in which the edge values are 255
 
-        new private byte[,] HoughTransform(byte[,] inputImage)
+        //For some reason the values comming from from our r calculation range from [- diagonalSize...diagonalSize] instead of [0... diagonalSize]
+        //We've contacted the course instructor who also wasn't able to help us.
+        //beside the unusual range the r-theta image does seem to make sence, therefore we've decided to resize the image so we could still do the other exersizes
+
+        //The input image should be a binary image in which the edge values are 255
+        private int[,] HoughTransform(byte[,] inputImage)
         {
-            int thetaMax = 180; // maximum value of theta in degrees
+            int thetaMax = 360; // maximum value of theta in degrees
             int diagonalSize = (int)Math.Sqrt((inputImage.GetLength(0) * inputImage.GetLength(0)) + (inputImage.GetLength(1) * inputImage.GetLength(1)));
-            byte[,] rThetaImage = new byte[thetaMax, diagonalSize * 2];
-            int[,] rValues = new int[inputImage.GetLength(0), inputImage.GetLength(1)];
-            int rMax = int.MaxValue;
-            int rMin = int.MinValue;
-            int maxIndex,minIndex;
+            int[,] rThetaImage = new int[thetaMax, diagonalSize * 2];
 
             for (int x = 0; x < InputImage.Size.Width; x++) // loop over columns
             {
                 for (int y = 0; y < InputImage.Size.Height; y++) // loop over rows
                 {
-                   
+                   //checks if the pixel is an edge pixel
                     if (inputImage[x, y] == 255)
                     {
-                        byte AverageR = 0;
                         for (int theta = 0; theta < thetaMax; theta++) // loop over angle values
                         {
-                            float thetaRadians = (theta * (float)Math.PI) / thetaMax;
+                            float thetaRadians = theta * (float)Math.PI / 180;
                             int r = (int)((x  * Math.Cos(thetaRadians)) + (( inputImage.GetLength(1) - y) * Math.Sin(thetaRadians)));
-                            rThetaImage[theta, r + (diagonalSize)] += 10;
+                            rThetaImage[theta, r + (diagonalSize)] += 1;
 
-                            byte rGreyScale = (byte)((r * (127f/707f))+127);
-                            rValues[x, y] = rGreyScale;
-                            AverageR += rGreyScale;
-                            //AverageR += rGreyScale;
-                            if (r > rMax)
-                            {
-                                rMax = r;
-                            }
-                            if (r < rMax)
-                            {
-                                rMin = r;
-                            }
                         }
-                        //rValues[x, y] = rMin;
-                        //rMin = 0;
+
                     }
                     
-                    /*else
-                    {
-                        rValues[x,y] = (byte)127;
-                    }*/
-                }
-            }
-            for (int n = 0; n > thetaMax; n++) {
-                for (int m = 0; m > rThetaImage.GetLength(1); m++)
-                {
-
                 }
             }
             return rThetaImage;
+        }
+
+        //the implementation is option B
+        private int[,] HoughPeakFinding(int[,] rthetaImage, int threshold)
+        {
+            int[,] peaks = new int[rthetaImage.GetLength(0),rthetaImage.GetLength(1)];
+            for (int x = 0; x < rthetaImage.GetLength(0); x++) // loop over columns
+            {
+                for (int y = 0; y < rthetaImage.GetLength(1); y++) // loop over rows
+                {
+                    int v = rthetaImage[x, y];
+                    if(v > rthetaImage[x - 1, y - 1] &&
+                       v > rthetaImage[x - 1, y    ] &&
+                       v > rthetaImage[x - 1, y + 1] &&
+                       v > rthetaImage[x    , y - 1] &&
+                       v > rthetaImage[x    , y + 1] &&
+                       v > rthetaImage[x + 1, y - 1] &&
+                       v > rthetaImage[x + 1, y    ] &&
+                       v > rthetaImage[x + 1, y + 1] )
+                    {
+                        peaks[x, y] = v;
+                    }
+                    else
+                    {
+                        peaks[x, y] = 0;
+                    }
+                }
+                //TODO: implement threshold (idk what they mean with pixel and %)
+            }
+            return peaks;
         }
     }
 }
