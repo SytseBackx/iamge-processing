@@ -798,11 +798,6 @@ namespace INFOIBV
         // ============= YOUR FUNCTIONS FOR ASSIGNMENT 3 GO HERE ==============
         // ====================================================================
 
-
-        //For some reason the values coming from from our r calculation range from [- diagonalSize...diagonalSize] instead of [0... diagonalSize]
-        //We've contacted the course instructor who also wasn't able to help us.
-        //beside the unusual range the r-theta image does seem to make sence, therefore we've decided to resize the image so we could still do the other exersizes
-
         //The input image should be a binary image in which the edge values are 255
         private int[,] HoughTransform(byte[,] inputImage)
         {
@@ -879,6 +874,34 @@ namespace INFOIBV
         {
             float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
             return y; 
+        }
+
+        //theta vvalues are in degrees
+        private int[,] HoughTransformAngleLimits(byte[,] inputImage,int lowerTheta, int maxTheta)
+        {
+            int diagonalSize = (int)Math.Sqrt((inputImage.GetLength(0) * inputImage.GetLength(0)) + (inputImage.GetLength(1) * inputImage.GetLength(1)));
+            int[,] rThetaImage = new int[maxTheta - lowerTheta, diagonalSize * 2];
+
+            for (int x = 0; x < InputImage.Size.Width; x++) // loop over columns
+            {
+                for (int y = 0; y < InputImage.Size.Height; y++) // loop over rows
+                {
+                    //checks if the pixel is an edge pixel
+                    if (inputImage[x, y] == 255)
+                    {
+                        for (int theta = lowerTheta; theta < maxTheta; theta++) // loop over angle values
+                        {
+                            float thetaRadians = theta * (float)Math.PI / 180;
+                            int r = (int)((x * Math.Cos(thetaRadians)) + ((inputImage.GetLength(1) - y) * Math.Sin(thetaRadians)));
+                            rThetaImage[theta, r + (diagonalSize)] += 1;
+
+                        }
+
+                    }
+
+                }
+            }
+            return rThetaImage;
         }
     }
 }
