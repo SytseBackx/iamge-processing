@@ -82,7 +82,7 @@ namespace INFOIBV
             int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
             int[,] test = HoughPeakFinding(rthetaImage, 10);
             //Histogram values = CountValues(workingImage);
-            byte[,] output = CloseImage(workingImage, strucElem); ;
+            byte[,] output = CloseImage(workingImage, strucElem);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -799,7 +799,7 @@ namespace INFOIBV
         // ====================================================================
 
 
-        //For some reason the values comming from from our r calculation range from [- diagonalSize...diagonalSize] instead of [0... diagonalSize]
+        //For some reason the values coming from from our r calculation range from [- diagonalSize...diagonalSize] instead of [0... diagonalSize]
         //We've contacted the course instructor who also wasn't able to help us.
         //beside the unusual range the r-theta image does seem to make sence, therefore we've decided to resize the image so we could still do the other exersizes
 
@@ -860,6 +860,25 @@ namespace INFOIBV
                 //TODO: implement threshold (idk what they mean with pixel and %)
             }
             return peaks;
+        }
+
+        private List<int> HoughLineDetection(int[,] inputImage, int pair, byte minIntensityThresh, int minLength, int maxGap, string type)
+        {
+            List<int> segments = new List<int>();
+            int threshold;
+            if (type == "binary")
+                threshold = 1;
+            else
+                threshold = minIntensityThresh;
+
+
+            return segments;
+        }
+
+        float getY (float x, float theta, float r)
+        {
+            float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
+            return y; 
         }
     }
 }
