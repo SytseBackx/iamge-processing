@@ -67,22 +67,22 @@ namespace INFOIBV
             //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             //byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            //float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            //float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
-            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
+            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
+            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
             byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary( invertImage(workingImage));//CreateBinary(invertImage( workingImage));
+            byte[,] binaryImage = CreateBinary(workingImage);
             List<Point> points = TraceBoundary(binaryImage,strucElem);
-            //byte[,] bound = FillImageFromList(workingImage,points);
+            byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
             int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
             int[,] test = HoughPeakFinding(rthetaImage, 10);
             //Histogram values = CountValues(workingImage);
-            byte[,] output = CloseImage(workingImage, strucElem);
+            byte[,] output = bound;
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -830,12 +830,30 @@ namespace INFOIBV
         //the implementation is option B
         private int[,] HoughPeakFinding(int[,] rthetaImage, int threshold)
         {
-            int[,] peaks = new int[rthetaImage.GetLength(0),rthetaImage.GetLength(1)];
+            int[,] peaks = rthetaImage;
             for (int x = 0; x < rthetaImage.GetLength(0); x++) // loop over columns
             {
                 for (int y = 0; y < rthetaImage.GetLength(1); y++) // loop over rows
                 {
                     int v = rthetaImage[x, y];
+                    for (int k = 0; k < 0; k++)
+                    {
+                        int xx = x + k - 1;
+                        if (!(xx < 0 || xx >= rthetaImage.GetLength(0))) {
+                            for (int l = 0; l < 0; l++)
+                            {
+                                int yy = y + l - 1;
+                                if (!(yy < 0 || yy >= rthetaImage.GetLength(0)))
+                                {
+                                    if(rthetaImage[xx,yy] > v)
+                                    {
+                                        peaks[x, y] = 0;
+                                    }
+                                }
+                            } 
+                        }
+                    }
+                    /*int v = rthetaImage[x, y];
                     if(v > rthetaImage[x - 1, y - 1] &&
                        v > rthetaImage[x - 1, y    ] &&
                        v > rthetaImage[x - 1, y + 1] &&
@@ -850,7 +868,7 @@ namespace INFOIBV
                     else
                     {
                         peaks[x, y] = 0;
-                    }
+                    }*/
                 }
                 //TODO: implement threshold (idk what they mean with pixel and %)
             }
