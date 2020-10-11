@@ -69,7 +69,7 @@ namespace INFOIBV
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
             float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
             float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
-            byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
+            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
             byte[,] strucElem = CreateStructuringElement("plus", 3);
@@ -81,6 +81,7 @@ namespace INFOIBV
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
             int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
             int[,] test = HoughPeakFinding(rthetaImage, 10);
+            //byte[,] filtered = visualiseBinary(convolveImage(workingImage, test));
             //Histogram values = CountValues(workingImage);
             byte[,] output = bound;
 
@@ -167,6 +168,20 @@ namespace INFOIBV
                     tempImage[x, y] = invertedColor;
                 }
             return tempImage;
+        }
+
+        private byte[,] visualiseBinary(byte[,] inputImage)
+        {
+            byte[,] test = inputImage;
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    if (test[x, y] == 1)
+                        test[x, y] = 255;
+                    else
+                        test[x, y] = 0;
+                }
+            return test;
         }
 
 
@@ -876,15 +891,55 @@ namespace INFOIBV
             return peaks;
         }
 
-        private List<int> HoughLineDetection(int[,] inputImage, int pair, byte minIntensityThresh, int minLength, int maxGap, string type)
+        private List<Point> HoughLineDetection(int[,] inputImage, float theta, float r, byte minIntensityThresh, int minLength, int maxGap, string type) //voeg pair toe ipv floats
         {
-            List<int> segments = new List<int>();
+            List<Point> coordinates = new List<Point>();
+            List<Point> line = new List<Point>();
+            List<Point> segments = new List<Point>();
             int threshold;
+            //voor binary is de threshold 1, voor grayscale is het de gegeven threshold
             if (type == "binary")
                 threshold = 1;
             else
                 threshold = minIntensityThresh;
 
+            //voeg alleen de pixels toe die aan zijn
+            for (int x = 0; x < inputImage.GetLength(0); x++) // loop over columns
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y++) // loop over rows
+                {
+                    float ycalc = getY(x, theta, r);
+                    //als de berekende waarde van y op de lijn binnen de foto ligt en boven de threshold is, is wordt hij toegevoegd aan de lijst van punten op deze lijn.
+                    if (y <= inputImage.GetLength(1) && y >= 0 && inputImage[x,y] >= threshold)
+                    {
+                        Point a = new Point(x, (int)ycalc);
+                        coordinates.Add(a);
+                    }
+                }
+            }
+
+            for(int i = 0; i < coordinates.Count; i++)
+            {
+                //controleer of de segmentlength tussen twee punten kleiner is dan de max gap. als dit zo is, wordt het aan een lijn gezien en toegevoegd aan de coordinaten lijst.
+                //als dit niet zo is, wordt de lijn toegevoegd aan de lijst van segmenten, mits hij langer is dan de minimum length.
+                if ((int)segmentLength(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y) < maxGap)
+                    line.Add(coordinates[i]);
+                else
+                {
+                    line.Add(coordinates[i]);
+                    if (segmentLength(coordinates[0].X, coordinates[0].Y, coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y) >= (float)minLength)
+                    {
+                        Point b = new Point(coordinates[0].X, coordinates[0].Y);
+                        Point c = new Point(coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y);
+                        segments.Add(b);
+                        segments.Add(c);
+                        coordinates.Clear();
+                    }
+                    else
+                        coordinates.Clear();
+                }
+
+            }
 
             return segments;
         }
@@ -894,6 +949,31 @@ namespace INFOIBV
             float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
             return y; 
         }
+
+        float segmentLength (float x1, float y1, float x2, float y2)
+        {
+            float x = (float)Math.Pow((x2 - x1), 2);
+            float y = (float)Math.Pow((y2 - y1), 2);
+            float d = (float)Math.Sqrt(x + y);
+            return d;
+        }
+
+        Bitmap HoughVisualisation(Bitmap inputImage, List<Point> segments)
+        {
+            Pen linePen = new Pen(Color.White, 4);
+            using (Bitmap bmp = inputImage)
+            {
+                for (int i = 0; i < segments.Count; i += 2)
+                {
+                    using (Graphics g = Graphics.FromImage(inputImage))
+                    {
+                        g.DrawLine(linePen, segments[i], segments[i + 1]);
+                    }
+                }
+                return bmp;
+            }
+        }
+
 
         //theta vvalues are in degrees
         private int[,] HoughTransformAngleLimits(byte[,] inputImage,int lowerTheta, int maxTheta)
