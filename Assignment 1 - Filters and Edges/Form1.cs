@@ -966,18 +966,17 @@ namespace INFOIBV
 
         Bitmap HoughVisualisation(Bitmap inputImage, List<Point> segments)
         {
-            Pen linePen = new Pen(Color.Red, 4);
-            using (Bitmap bmp = inputImage)
-            {
+            Pen linePen = new Pen(Color.Red, 3);
+
                 for (int i = 0; i < segments.Count; i += 2)
                 {
-                    using (Graphics g = Graphics.FromImage(inputImage))
+                    using (var g = Graphics.FromImage(inputImage))
                     {
                         g.DrawLine(linePen, segments[i], segments[i + 1]);
                     }
                 }
-                return bmp;
-            }
+                return inputImage;
+            
         }
 
 
