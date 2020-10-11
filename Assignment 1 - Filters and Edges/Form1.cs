@@ -843,9 +843,10 @@ namespace INFOIBV
         }
 
         //the implementation is option B
-        private int[,] HoughPeakFinding(int[,] rthetaImage, int threshold)
+        private List<Point> HoughPeakFinding(int[,] rthetaImage, int threshold)
         {
-            int[,] peaks = rthetaImage;
+            int[,] temp = rthetaImage;
+            List<Point> peaks = new List<Point>();
             for (int x = 0; x < rthetaImage.GetLength(0); x++) // loop over columns
             {
                 for (int y = 0; y < rthetaImage.GetLength(1); y++) // loop over rows
@@ -860,30 +861,19 @@ namespace INFOIBV
                                 int yy = y + l - 1;
                                 if (!(yy < 0 || yy >= rthetaImage.GetLength(0)))
                                 {
-                                    if(rthetaImage[xx,yy] > v && rthetaImage[xx,yy] > threshold)
+                                    if(rthetaImage[xx,yy] > v)
                                     {
-                                        peaks[x, y] = 0;
+                                        temp[x, y] = 0;
                                     }
                                 }
                             } 
                         }
                     }
-                    /*int v = rthetaImage[x, y];
-                    if(v > rthetaImage[x - 1, y - 1] &&
-                       v > rthetaImage[x - 1, y    ] &&
-                       v > rthetaImage[x - 1, y + 1] &&
-                       v > rthetaImage[x    , y - 1] &&
-                       v > rthetaImage[x    , y + 1] &&
-                       v > rthetaImage[x + 1, y - 1] &&
-                       v > rthetaImage[x + 1, y    ] &&
-                       v > rthetaImage[x + 1, y + 1] )
+
+                    if(temp[x,y] > threshold)
                     {
-                        peaks[x, y] = v;
+                        peaks.Add(new Point(x,y));
                     }
-                    else
-                    {
-                        peaks[x, y] = 0;
-                    }*/
                 }
 
             }
