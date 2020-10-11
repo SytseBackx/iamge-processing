@@ -80,12 +80,14 @@ namespace INFOIBV
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
             //int[,] test = HoughPeakFinding(rthetaImage, 10);
-            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 910);
+            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 1185);//1195);
+            for(int i = 0; i <  points.Count; i++)
+                Console.WriteLine(points[i]);
             //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage, points));
             Bitmap hough = InputImage;
             for (int i = 0; i < points.Count; i++)
             {
-                List<Point> p = HoughLineDetection(binaryImage, points[i], 155, 15, 10, "binary");
+               List<Point> p = HoughLineDetection(binaryImage, points[i], 0, 2000, 2500, "binary");
                 hough = HoughVisualisation(hough, p);
             }
 
@@ -950,9 +952,11 @@ namespace INFOIBV
             return segments;
         }
 
-        float getY (float x, float theta, float r)
+        float getY (float x, float th, float r)
         {
-            float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
+            float theta = th * (float)Math.PI / 180;
+            float y = (float)((-Math.Cos(theta) / Math.Sin(theta)) * x + (r / Math.Sin(theta)));
+            //float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
             return y; 
         }
 
