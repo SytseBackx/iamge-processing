@@ -957,6 +957,23 @@ namespace INFOIBV
             return d;
         }
 
+        Bitmap HoughVisualisation(Bitmap inputImage, List<Point> segments)
+        {
+            Pen linePen = new Pen(Color.White, 4);
+            using (Bitmap bmp = inputImage)
+            {
+                for (int i = 0; i < segments.Count; i += 2)
+                {
+                    using (Graphics g = Graphics.FromImage(inputImage))
+                    {
+                        g.DrawLine(linePen, segments[i], segments[i + 1]);
+                    }
+                }
+                return bmp;
+            }
+        }
+
+
         //theta vvalues are in degrees
         private int[,] HoughTransformAngleLimits(byte[,] inputImage,int lowerTheta, int maxTheta)
         {
