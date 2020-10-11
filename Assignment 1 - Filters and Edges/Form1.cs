@@ -75,12 +75,12 @@ namespace INFOIBV
             //byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary(workingImage);
+            byte[,] binaryImage = CreateBinary(invertImage( workingImage));
             //List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
             //int[,] test = HoughPeakFinding(rthetaImage, 10);
-            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 155);
+            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 910);
             //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage, points));
             Bitmap hough = InputImage;
             for (int i = 0; i < points.Count; i++)
@@ -922,25 +922,27 @@ namespace INFOIBV
                 }
             }
 
-            for(int i = 0; i < coordinates.Count; i++)
+            for( int i = 0; i < coordinates.Count -1; i++)
             {
                 //controleer of de segmentlength tussen twee punten kleiner is dan de max gap. als dit zo is, wordt het aan een lijn gezien en toegevoegd aan de coordinaten lijst.
                 //als dit niet zo is, wordt de lijn toegevoegd aan de lijst van segmenten, mits hij langer is dan de minimum length.
-                if ((int)segmentLength(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y) < maxGap)
-                    line.Add(coordinates[i]);
-                else
                 {
-                    line.Add(coordinates[i]);
-                    if (segmentLength(coordinates[0].X, coordinates[0].Y, coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y) >= (float)minLength)
-                    {
-                        Point b = new Point(coordinates[0].X, coordinates[0].Y);
-                        Point c = new Point(coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y);
-                        segments.Add(b);
-                        segments.Add(c);
-                        coordinates.Clear();
-                    }
+                    if ((int)segmentLength(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y) < maxGap)
+                        line.Add(coordinates[i]);
                     else
-                        coordinates.Clear();
+                    {
+                        line.Add(coordinates[i]);
+                        if (segmentLength(coordinates[0].X, coordinates[0].Y, coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y) >= (float)minLength)
+                        {
+                            Point b = new Point(coordinates[0].X, coordinates[0].Y);
+                            Point c = new Point(coordinates[coordinates.Count - 1].X, coordinates[coordinates.Count - 1].Y);
+                            segments.Add(b);
+                            segments.Add(c);
+                            coordinates.Clear();
+                        }
+                        else
+                            coordinates.Clear();
+                    } 
                 }
 
             }
@@ -956,8 +958,8 @@ namespace INFOIBV
 
         float segmentLength (float x1, float y1, float x2, float y2)
         {
-            float x = (float)Math.Pow((x2 - x1), 2);
-            float y = (float)Math.Pow((y2 - y1), 2);
+            float x = (x2 - x1)* (x2 - x1);
+            float y = (y2 - y1)* (y2 - y1);
             float d = (float)Math.Sqrt(x + y);
             return d;
         }
