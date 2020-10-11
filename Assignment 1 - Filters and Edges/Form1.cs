@@ -845,7 +845,7 @@ namespace INFOIBV
                                 int yy = y + l - 1;
                                 if (!(yy < 0 || yy >= rthetaImage.GetLength(0)))
                                 {
-                                    if(rthetaImage[xx,yy] > v)
+                                    if(rthetaImage[xx,yy] > v && rthetaImage[xx,yy] > threshold)
                                     {
                                         peaks[x, y] = 0;
                                     }
@@ -870,8 +870,9 @@ namespace INFOIBV
                         peaks[x, y] = 0;
                     }*/
                 }
-                //TODO: implement threshold (idk what they mean with pixel and %)
+
             }
+            
             return peaks;
         }
 
