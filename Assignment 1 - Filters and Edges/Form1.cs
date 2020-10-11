@@ -72,32 +72,44 @@ namespace INFOIBV
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            byte[,] strucElem = CreateStructuringElement("plus", 3);
+            //byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
             byte[,] binaryImage = CreateBinary(workingImage);
-            List<Point> points = TraceBoundary(binaryImage,strucElem);
-            byte[,] bound = FillImageFromList(workingImage,points);
+            //List<Point> points = TraceBoundary(binaryImage,strucElem);
+            //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
-            int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage,points));
-            int[,] test = HoughPeakFinding(rthetaImage, 10);
+            //int[,] test = HoughPeakFinding(rthetaImage, 10);
+            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 155);
+            //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage, points));
+            Bitmap hough = InputImage;
+            for (int i = 0; i < points.Count; i++)
+            {
+                List<Point> p = HoughLineDetection(binaryImage, points[i], 155, 15, 10, "binary");
+                hough = HoughVisualisation(hough, p);
+            }
+
             //byte[,] filtered = visualiseBinary(convolveImage(workingImage, test));
             //Histogram values = CountValues(workingImage);
-            byte[,] output = bound;
+            //Color[,] hImage = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
+            //for (int x = 0; x < hough.Size.Width; x++)                 // loop over columns
+            //    for (int y = 0; y < hough.Size.Height; y++)            // loop over rows
+            //        hImage[x, y] = hough.GetPixel(x, y);                // set pixel color in array at (x,y)
+            //byte[,] output = //convertToGrayscale(hImage);
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
-            OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
+            //OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
             // copy array to output Bitmap
-            for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
-                for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
-                {
-                    Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
-                    OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
-                }
+            //for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
+            //    for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
+             //   {
+            //        Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
+            //        OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
+            //    }
 
-            pictureBox2.Image = (Image)OutputImage;                         // display output image
+            pictureBox2.Image = (Image)hough;                         // display output image
 
         }
 
@@ -881,8 +893,10 @@ namespace INFOIBV
             return peaks;
         }
 
-        private List<Point> HoughLineDetection(int[,] inputImage, float theta, float r, byte minIntensityThresh, int minLength, int maxGap, string type) //voeg pair toe ipv floats
+        private List<Point> HoughLineDetection(byte[,] inputImage, Point punt, byte minIntensityThresh, int minLength, int maxGap, string type) //voeg pair toe ipv floats
         {
+            float theta = punt.X;
+            float r = punt.Y;
             List<Point> coordinates = new List<Point>();
             List<Point> line = new List<Point>();
             List<Point> segments = new List<Point>();
@@ -950,7 +964,7 @@ namespace INFOIBV
 
         Bitmap HoughVisualisation(Bitmap inputImage, List<Point> segments)
         {
-            Pen linePen = new Pen(Color.White, 4);
+            Pen linePen = new Pen(Color.Red, 4);
             using (Bitmap bmp = inputImage)
             {
                 for (int i = 0; i < segments.Count; i += 2)
