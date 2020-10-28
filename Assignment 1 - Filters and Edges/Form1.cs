@@ -53,10 +53,8 @@ namespace INFOIBV
             if (OutputImage != null) OutputImage.Dispose();                 // reset output image
 
 
-            Image club = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Club.png");
-            Image diamond = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Diamond.png");
-            Image heart = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Heart.png");
-            Image spade = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Spade.png");
+            ////////////inporting the symbols and converting them to gretscale//////////////////
+            
 
             Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
 
@@ -71,57 +69,58 @@ namespace INFOIBV
             // Alternatively you can create buttons to invoke certain functionality
             // ====================================================================
 
-            byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
-            //byte[,] invertedImage = invertImage(workingImage);
-            //byte[,] contrastedImage = adjustContrast(workingImage);
-            float[,] GaussianFilter = createGaussianFilter(9, 1);
-            //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
-            //byte[,] MedianFilter = medianFilter(workingImage, 5);
-            //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, { 0 }, { 0.5f } };
-            float[,] verticalKernal = new float[1, 3] { { -0.5f, 0, 0.5f } };
-            //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
-            //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
-            //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
-            //byte[,] strucElem = CreateStructuringElement("plus", 3);
-            //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
-            //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary(invertImage(workingImage));
-            //List<Point> points = TraceBoundary(binaryImage,strucElem);
-            //byte[,] bound = FillImageFromList(workingImage,points);
-            //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
-            //int[,] test = HoughPeakFinding(rthetaImage, 10);
-            List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 1185);//1195);
-            for (int i = 0; i < points.Count; i++)
-                Console.WriteLine(points[i]);
-            //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage, points));
-            Bitmap hough = InputImage;
-            for (int i = 0; i < points.Count; i++)
-            {
-                List<Point> p = HoughLineDetection(binaryImage, points[i], 0, 2000, 2500, "binary");
-                hough = HoughVisualisation(hough, p);
-            }
+            Bitmap Club = (Bitmap)System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Club.png");
+            byte[,] club = new byte[Club.Size.Width, Club.Size.Height];
+            // copy input Bitmap to array            
+            for (int x = 0; x < Club.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < Club.Size.Height; y++)            // loop over rows
+                    club[x, y] = (byte)(Club.GetPixel(x, y).R + Club.GetPixel(x, y).G + Club.GetPixel(x, y).B / 3);                // set pixel color in array at (x,y)
 
-            //byte[,] cornersDetected = cornerDetection(workingImage,verticalKernal,horizontalKernal);
-            //byte[,] output = SIFT(workingImage);
-            //Histogram values = CountValues(workingImage);
-            //Color[,] hImage = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
-            //for (int x = 0; x < hough.Size.Width; x++)                 // loop over columns
-            //    for (int y = 0; y < hough.Size.Height; y++)            // loop over rows
-            //        hImage[x, y] = hough.GetPixel(x, y);                // set pixel color in array at (x,y)
-            //byte[,] output = //convertToGrayscale(hImage);
+            Bitmap Diamond = (Bitmap)System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Diamond.png");
+            byte[,] diamond = new byte[Diamond.Size.Width, Diamond.Size.Height];
+            // copy input Bitmap to array            
+            for (int x = 0; x < Diamond.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < Diamond.Size.Height; y++)            // loop over rows
+                    diamond[x, y] = (byte)(Diamond.GetPixel(x, y).R + Diamond.GetPixel(x, y).G + Diamond.GetPixel(x, y).B / 3);                // set pixel color in array at (x,y)
+
+            Bitmap Heart = (Bitmap)System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Heart.png");
+            byte[,] heart = new byte[Heart.Size.Width, Heart.Size.Height];
+            // copy input Bitmap to array            
+            for (int x = 0; x < Heart.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < Heart.Size.Height; y++)            // loop over rows
+                    heart[x, y] = (byte)(Heart.GetPixel(x, y).R + Heart.GetPixel(x, y).G + Heart.GetPixel(x, y).B / 3);               // set pixel color in array at (x,y)
+
+            Bitmap Spade = (Bitmap)System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Spade.png");
+            byte[,] spade = new byte[Spade.Size.Width, Spade.Size.Height];
+            // copy input Bitmap to array            
+            for (int x = 0; x < Spade.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < Spade.Size.Height; y++)            // loop over rows
+                    heart[x, y] = (byte)(Heart.GetPixel(x, y).R + Heart.GetPixel(x, y).G + Heart.GetPixel(x, y).B / 3);       // set pixel color in array at (x,y)
+
+
+            byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
+
+            List<int[,,]> SIFTTransformDiamond = SIFT(diamond, 10000);
+            List<int[,,]> SIFTTransformHeart = SIFT(heart, 10000);
+            List<int[,,]> SIFTTransformClub = SIFT(club, 15000);
+            List<int[,,]> SIFTTransformSpade = SIFT(spade, 15000);
+
+            List<int[,,]> SIFTTransformRed = SIFT(workingImage, 10000);
+            List<int[,,]> SIFTTransformBlack = SIFT(workingImage, 15000);
+            byte[,] output = spade;
+            
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
-            OutputImage = (Bitmap)heart;//new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
-            /*/ copy array to output Bitmap
+            OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
+            // copy array to output Bitmap
             for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
                 for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
                 {
                     Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
-                }*/
+                }
 
             pictureBox2.Image = OutputImage;                         // display output image
 
@@ -1120,21 +1119,21 @@ namespace INFOIBV
             return corners;
         }
 
-        private byte[,] SIFT(byte[,] inputImage)
+        private List<int[,,]> SIFT(byte[,] inputImage, int contrastThreshold)
         {
             float k = (float)Math.Sqrt(2);
             byte size = 17;
             int[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, size, k);
 
-            List<Tuple<int, int, int, int>> keyPoints = SIFTFindKeypoints(HSS, 10, inputImage);
+            List<Tuple<int, int, int, int>> keyPoints = SIFTFindKeypoints(HSS, 10, inputImage, contrastThreshold);
 
-            List<Tuple<int, int, int, int>> keyPointsdir = DetermineKeyPointDirection(keyPoints, inputImage, k, size);
+            List<Tuple<int, int, int, int, int[]>> keyPointsdir = DetermineKeyPointDirection(keyPoints, inputImage, k, size);
 
             List<Tuple<int, int, int, int>> teset = keyPoints;
 
-            byte[,] tempImage = inputImage;
+            List<int[,,]> localDiscriptors = 
 
-            return tempImage;
+            return localDiscriptors;
         }
 
         //assumes the inputimages are the same size, will throw index out of range error if the second image is larger
@@ -1246,9 +1245,9 @@ namespace INFOIBV
             return doubled;
         }*/
 
-        private List<Tuple<int, int, int, int>> SIFTFindKeypoints(int[,][,] hss, int threshold, byte[,] inputImage)
+        private List<Tuple<int, int, int, int>> SIFTFindKeypoints(int[,][,] hss, int threshold, byte[,] inputImage, int cornerThreshold)
         {
-            List<Tuple<int,int,int,int>> tempKeyPoints = new List<Tuple<int, int, int, int>>();
+            List<Tuple<int, int, int, int>> tempKeyPoints = new List<Tuple<int, int, int, int>>();
             List<Tuple<int, int, int, int>> keyPoints = new List<Tuple<int, int, int, int>>();
 
             /////////////finds all local max and mins/////////////////////
@@ -1293,7 +1292,7 @@ namespace INFOIBV
                             }
                             if ((max == hss[i, j][x, y] || min == hss[i, j][x, y]) && Math.Abs(hss[i, j][x, y]) > threshold)
                             {
-                                tempKeyPoints.Add(new Tuple<int, int, int, int>(i,j,x,y));
+                                tempKeyPoints.Add(new Tuple<int, int, int, int>(i, j, x, y));
                             }
                         }
                     }
@@ -1312,12 +1311,11 @@ namespace INFOIBV
             float[,] verticalKernal = new float[1, 3] { { -0.5f, 0, 0.5f } };
             float alpha = 0.05f;
 
-            int cornerThreshold = 1;
             foreach (Tuple<int, int, int, int> candidate in tempKeyPoints)
             {
                 int i = candidate.Item1;
                 int j = candidate.Item2;
-                int[,] Dx = convolveImageInt(hss[i,j], horizontalKernal);
+                int[,] Dx = convolveImageInt(hss[i, j], horizontalKernal);
                 int[,] Dy = convolveImageInt(hss[i, j], verticalKernal);
                 int x = candidate.Item3;
                 int y = candidate.Item4;
@@ -1330,7 +1328,7 @@ namespace INFOIBV
                 float Q = (A * B - C * C) - alpha * (A + B) * (A + B);
                 if (Q > cornerThreshold)
                 {
-                     keyPoints.Add(candidate);
+                    keyPoints.Add(candidate);
                 }
 
 
@@ -1339,8 +1337,9 @@ namespace INFOIBV
             return keyPoints;
         }
 
-        private List<Tuple<int, int, int, int>> DetermineKeyPointDirection(List<Tuple<int, int, int, int>> keypoints, byte[,] inputImage, float k, byte size)
+        private List<Tuple<int, int, int, int, int[]>> DetermineKeyPointDirection(List<Tuple<int, int, int, int>> keypoints, byte[,] inputImage, float k, byte size)
         {
+            List<Tuple<int, int, int, int, int[]>> keypointWithHisto = new List<Tuple<int, int, int, int, int[]>>();
             foreach (Tuple<int, int, int, int> keyPoint in keypoints)
             {
                 int i = keyPoint.Item1;
@@ -1348,26 +1347,24 @@ namespace INFOIBV
                 float sigma = (float)Math.Pow(k,j) * (2 ^ (i-1)); 
                 byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
                 int[] directionHistogram = new int[36];
-                for (int x = 0; x < L.GetLength(0); x++) // loop over columns
+                int x = keyPoint.Item3;
+                int y = keyPoint.Item4;
+                if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
                 {
-                    for (int y = 0; y < L.GetLength(1); y++) // loop over rows
-                    {
-                        if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
-                        {
-                            float magnitude = (float)Math.Sqrt((L[x + 1,y] - L[x - 1,y]) ^ 2 + (L[x,y + 1] - L[x,y - 1]) ^ 2);
-                            int theta = (int)(Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI) ;
-                            int distanceFromLowerVal = theta % 10;
-                            directionHistogram[(theta - distanceFromLowerVal) / 10] +=  (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
-                            directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
-                        }
-                        
-                    }
+                    float magnitude = (float)Math.Sqrt((L[x + 1,y] - L[x - 1,y]) ^ 2 + (L[x,y + 1] - L[x,y - 1]) ^ 2);
+                    int theta = (int)(Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI) ;
+                    int distanceFromLowerVal = theta % 10;
+                    directionHistogram[(theta - distanceFromLowerVal) / 10] +=  (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
+                    directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
 
                 }
                 //////smooth out histogram////////
+                ///
+
+                keypointWithHisto.Add(new Tuple<int, int, int, int, int[]>(i,j,x,y,directionHistogram));
 
             }
-            return keypoints;
+            return keypointWithHisto;
         }
 
         private float[,] normalizeFilter(float[,] filter)
