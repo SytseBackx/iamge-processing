@@ -1384,5 +1384,55 @@ namespace INFOIBV
             }
             return normalized;
         }
+
+        private List<Point> SIFTDescriptor(byte[,] inputImage, Tuple<int, int, int, int> keypoint, int scale, float angle, float k, byte size)
+        {
+            int half = scale / 2;
+            int segment = half / 2;
+            Point punt = new Point(keypoint.Item3, keypoint.Item4);
+            Point center = ConvertSystem(angle, punt);
+            Point LB = PointOnLine(angle + 90, PointOnLine(angle, center, -half), -half);
+            Point LM = PointOnLine(angle, center, -half);
+            Point LO = PointOnLine(angle + 90, PointOnLine(angle, center, -half), half);
+
+            //histogram in progress
+            int i = keypoint.Item1;
+            int j = keypoint.Item2;
+            float sigma = (float)Math.Pow(k, j) * (2 ^ (i - 1));
+            byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
+            int[] directionHistogram = new int[36];
+            for (int x = 0; x < L.GetLength(0); x++) // loop over columns
+            {
+                for (int y = 0; y < L.GetLength(1); y++) // loop over rows
+                {
+                    if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
+                    {
+                        float magnitude = (float)Math.Sqrt((L[x + 1, y] - L[x - 1, y]) ^ 2 + (L[x, y + 1] - L[x, y - 1]) ^ 2);
+                        int theta = (int)(Math.Atan2(L[x, y + 1] - L[x, y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI);
+                        int distanceFromLowerVal = theta % 10;
+                        directionHistogram[(theta - distanceFromLowerVal) / 10] += (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
+                        directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
+                    }
+
+                }
+
+            }
+        }
+
+        Point ConvertSystem(float angle, Point p)
+        {
+            //convert the cartesian coordinate s
+            double radian = angle * (Math.PI / 180);
+            float newX = (float)Math.Cos(radian) * p.X - (float)Math.Sin(radian) * p.Y;
+            float newY = (float)Math.Sin(radian) * p.X + p.Y * (float)Math.Cos(radian);
+            Point coordinate = new Point((int)newX, (int)newY);
+            return coordinate;
+        }
+        Point PointOnLine(float angle, Point p, int dist)
+        {
+            double radian = angle * (Math.PI / 180);
+            Point c = new Point(p.X + dist * (int)Math.Cos(radian), p.Y + dist * (int)Math.Sin(radian));
+            return c;
+        }
     }
 }
