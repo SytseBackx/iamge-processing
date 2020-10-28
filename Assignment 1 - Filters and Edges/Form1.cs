@@ -47,7 +47,7 @@ namespace INFOIBV
         {
             if (InputImage == null) return;                                 // get out if no input image
             if (OutputImage != null) OutputImage.Dispose();                 // reset output image
-           
+
             Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
 
             // copy input Bitmap to array            
@@ -63,35 +63,36 @@ namespace INFOIBV
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
             //byte[,] invertedImage = invertImage(workingImage);
             //byte[,] contrastedImage = adjustContrast(workingImage);
-            //float[,] GaussianFilter = createGaussianFilter(5, 5);
+            float[,] GaussianFilter = createGaussianFilter(9, 1);
             //byte[,] FilteredImage = convolveImage(workingImage, GaussianFilter);
             //byte[,] MedianFilter = medianFilter(workingImage, 5);
             //byte[,] ThresholdFilter = thresholdImage(workingImage);
-            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, {0 }, {0.5f}};
-            float[,] verticalKernal = new float[1, 3] { { -0.5f ,  0,  0.5f} };
+            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, { 0 }, { 0.5f } };
+            float[,] verticalKernal = new float[1, 3] { { -0.5f, 0, 0.5f } };
             //byte[,] EdgeMagnitudeImage = edgeMagnitude(workingImage, horizontalKernal, verticalKernal) ;
             //byte[,] pipelineB = thresholdImage(edgeMagnitude(convolveImage(workingImage,GaussianFilter),horizontalKernal,verticalKernal));
             //byte[,] pipelineC = thresholdImage(edgeMagnitude(medianFilter(workingImage, 5), horizontalKernal, verticalKernal));
             //byte[,] strucElem = CreateStructuringElement("plus", 3);
             //byte[,] dilatedImage = DilateImage(workingImage, strucElem);
             //byte[,] erodedImage = CloseImage(workingImage, strucElem);
-            byte[,] binaryImage = CreateBinary(invertImage( workingImage));
+            byte[,] binaryImage = CreateBinary(invertImage(workingImage));
             //List<Point> points = TraceBoundary(binaryImage,strucElem);
             //byte[,] bound = FillImageFromList(workingImage,points);
             //byte[,] openImage = invertImage(OpenImage(invertImage(workingImage), strucElem));
             //int[,] test = HoughPeakFinding(rthetaImage, 10);
             List<Point> points = HoughPeakFinding(HoughTransform(workingImage), 1185);//1195);
-            for(int i = 0; i <  points.Count; i++)
+            for (int i = 0; i < points.Count; i++)
                 Console.WriteLine(points[i]);
             //int[,] rthetaImage = HoughTransform(FillImageFromList(workingImage, points));
             Bitmap hough = InputImage;
             for (int i = 0; i < points.Count; i++)
             {
-               List<Point> p = HoughLineDetection(binaryImage, points[i], 0, 2000, 2500, "binary");
+                List<Point> p = HoughLineDetection(binaryImage, points[i], 0, 2000, 2500, "binary");
                 hough = HoughVisualisation(hough, p);
             }
 
-            //byte[,] filtered = visualiseBinary(convolveImage(workingImage, test));
+            //byte[,] cornersDetected = cornerDetection(workingImage,verticalKernal,horizontalKernal);
+            byte[,] output = SIFT(workingImage);
             //Histogram values = CountValues(workingImage);
             //Color[,] hImage = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
             //for (int x = 0; x < hough.Size.Width; x++)                 // loop over columns
@@ -102,16 +103,16 @@ namespace INFOIBV
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
-            //OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
+            OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
             // copy array to output Bitmap
-            //for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
-            //    for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
-             //   {
-            //        Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
-            //        OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
-            //    }
+            for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
+                for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
+                {
+                    Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
+                    OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
+                }
 
-            pictureBox2.Image = (Image)hough;                         // display output image
+            pictureBox2.Image = OutputImage;                         // display output image
 
         }
 
@@ -301,7 +302,7 @@ namespace INFOIBV
 
                             int yy = y + (yoffset);
 
-                            if (xx >= 0 && xx < InputImage.Size.Width && yy >= 0 && yy < InputImage.Size.Height)
+                            if (xx >= 0 && xx < inputImage.GetLength(0) && yy >= 0 && yy < inputImage.GetLength(1))
                             {
                                 float colorval = inputImage[xx, yy];
                                 float scalar = filter[xoffset + filterRadiusX, yoffset + filterRadiusY];
@@ -838,19 +839,19 @@ namespace INFOIBV
             {
                 for (int y = 0; y < InputImage.Size.Height; y++) // loop over rows
                 {
-                   //checks if the pixel is an edge pixel
+                    //checks if the pixel is an edge pixel
                     if (inputImage[x, y] == 255)
                     {
                         for (int theta = 0; theta < thetaMax; theta++) // loop over angle values
                         {
                             float thetaRadians = theta * (float)Math.PI / 180;
-                            int r = (int)((x  * Math.Cos(thetaRadians)) + (( inputImage.GetLength(1) - y) * Math.Sin(thetaRadians)));
+                            int r = (int)((x * Math.Cos(thetaRadians)) + ((inputImage.GetLength(1) - y) * Math.Sin(thetaRadians)));
                             rThetaImage[theta, r + (diagonalSize)] += 1;
 
                         }
 
                     }
-                    
+
                 }
             }
             return rThetaImage;
@@ -875,23 +876,23 @@ namespace INFOIBV
                                 int yy = y + l - 1;
                                 if (!(yy < 0 || yy >= rthetaImage.GetLength(0)))
                                 {
-                                    if(rthetaImage[xx,yy] > v)
+                                    if (rthetaImage[xx, yy] > v)
                                     {
                                         temp[x, y] = 0;
                                     }
                                 }
-                            } 
+                            }
                         }
                     }
 
-                    if(temp[x,y] > threshold)
+                    if (temp[x, y] > threshold)
                     {
-                        peaks.Add(new Point(x,y));
+                        peaks.Add(new Point(x, y));
                     }
                 }
 
             }
-            
+
             return peaks;
         }
 
@@ -916,7 +917,7 @@ namespace INFOIBV
                 {
                     float ycalc = getY(x, theta, r);
                     //als de berekende waarde van y op de lijn binnen de foto ligt en boven de threshold is, is wordt hij toegevoegd aan de lijst van punten op deze lijn.
-                    if (y <= inputImage.GetLength(1) && y >= 0 && inputImage[x,y] >= threshold)
+                    if (y <= inputImage.GetLength(1) && y >= 0 && inputImage[x, y] >= threshold)
                     {
                         Point a = new Point(x, (int)ycalc);
                         coordinates.Add(a);
@@ -924,7 +925,7 @@ namespace INFOIBV
                 }
             }
 
-            for( int i = 0; i < coordinates.Count -1; i++)
+            for (int i = 0; i < coordinates.Count - 1; i++)
             {
                 //controleer of de segmentlength tussen twee punten kleiner is dan de max gap. als dit zo is, wordt het aan een lijn gezien en toegevoegd aan de coordinaten lijst.
                 //als dit niet zo is, wordt de lijn toegevoegd aan de lijst van segmenten, mits hij langer is dan de minimum length.
@@ -944,7 +945,7 @@ namespace INFOIBV
                         }
                         else
                             coordinates.Clear();
-                    } 
+                    }
                 }
 
             }
@@ -952,18 +953,18 @@ namespace INFOIBV
             return segments;
         }
 
-        float getY (float x, float th, float r)
+        float getY(float x, float th, float r)
         {
             float theta = th * (float)Math.PI / 180;
             float y = (float)((-Math.Cos(theta) / Math.Sin(theta)) * x + (r / Math.Sin(theta)));
             //float y = (float)(r - x * Math.Cos(theta)) / (float)(Math.Sin(theta));
-            return y; 
+            return y;
         }
 
-        float segmentLength (float x1, float y1, float x2, float y2)
+        float segmentLength(float x1, float y1, float x2, float y2)
         {
-            float x = (x2 - x1)* (x2 - x1);
-            float y = (y2 - y1)* (y2 - y1);
+            float x = (x2 - x1) * (x2 - x1);
+            float y = (y2 - y1) * (y2 - y1);
             float d = (float)Math.Sqrt(x + y);
             return d;
         }
@@ -972,20 +973,20 @@ namespace INFOIBV
         {
             Pen linePen = new Pen(Color.Red, 3);
 
-                for (int i = 0; i < segments.Count; i += 2)
+            for (int i = 0; i < segments.Count; i += 2)
+            {
+                using (var g = Graphics.FromImage(inputImage))
                 {
-                    using (var g = Graphics.FromImage(inputImage))
-                    {
-                        g.DrawLine(linePen, segments[i], segments[i + 1]);
-                    }
+                    g.DrawLine(linePen, segments[i], segments[i + 1]);
                 }
-                return inputImage;
-            
+            }
+            return inputImage;
+
         }
 
 
         //theta vvalues are in degrees
-        private int[,] HoughTransformAngleLimits(byte[,] inputImage,int lowerTheta, int maxTheta)
+        private int[,] HoughTransformAngleLimits(byte[,] inputImage, int lowerTheta, int maxTheta)
         {
             int diagonalSize = (int)Math.Sqrt((inputImage.GetLength(0) * inputImage.GetLength(0)) + (inputImage.GetLength(1) * inputImage.GetLength(1)));
             int[,] rThetaImage = new int[maxTheta - lowerTheta, diagonalSize * 2];
@@ -1010,6 +1011,256 @@ namespace INFOIBV
                 }
             }
             return rThetaImage;
+        }
+
+        List<Point> cornerDetection(byte[,] inputImage, float[,] verticalKernel, float[,] horizontalKernel)
+        {
+            // create temporary grayscale image
+            byte[,] tempImage = new byte[inputImage.GetLength(0), inputImage.GetLength(1)];
+
+            float[,] gausFilter = createGaussianFilter(5, 5);
+
+            byte[,] Dx = convolveImage(convolveImage(inputImage, horizontalKernel), gausFilter);
+            byte[,] Dy = convolveImage(convolveImage(inputImage, verticalKernel), gausFilter);
+
+            float alpha = 0.05f;
+            int threshold = 5000;
+            int minDBetweenCorners = 50;
+            List<Tuple<float, Point>> tempCorners = new List<Tuple<float, Point>>();
+            List<Point> corners = new List<Point>();
+
+            for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
+                for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
+                {
+                    byte Dxval = Dx[x, y];
+                    byte Dyval = Dy[x, y];
+                    float A = Dxval * Dxval;
+                    float B = Dyval * Dyval;
+                    float C = Dyval * Dyval;
+
+                    float[,] M = new float[,] { { A, C }, { C, B } };
+
+                    float Q = (A * B - C * C) - alpha * (A + B) * (A + B);
+                    if (Q > threshold)
+                    {
+                        tempCorners.Add(new Tuple<float, Point>(Q, new Point(x, y)));
+                    }
+
+                }
+            for (int i = 0; i < tempCorners.Count; i++)
+            {
+                Point p1 = tempCorners[i].Item2;
+                for (int j = i + 1; j < tempCorners.Count; j++)
+                {
+                    Point p2 = tempCorners[j].Item2;
+                    double d = Math.Sqrt((p2.X - p1.X) * (p2.X - p1.X)) + ((p2.Y - p1.Y) * (p2.Y - p1.Y));
+                    if (d < minDBetweenCorners)
+                    {
+                        tempCorners.RemoveAt(j);
+                        tempImage[p1.X, p1.Y] = 255;
+                    }
+                }
+                corners.Add(p1);
+            }
+
+            return corners;
+        }
+
+        private byte[,] SIFT(byte[,] inputImage)
+        {
+            byte[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, 17, (float)Math.Sqrt(2));
+
+            List<Point> keyPoints = SIFTFindKeypoints(HSS);
+
+            List<Point> teset = keyPoints;
+
+            byte[,] tempImage = HSS[2,2];
+
+            return tempImage;
+        }
+
+        //assumes the inputimages are the same size, will throw index out of range error if the second image is larger
+        private byte[,] ImageDif(byte[,] inputImage1, byte[,] inputImage2)
+        {
+
+            byte[,] tempImage = new byte[inputImage1.GetLength(0), inputImage1.GetLength(1)];
+
+            for (int x = 0; x < inputImage1.GetLength(0); x++)
+            {
+                for (int y = 0; y < inputImage1.GetLength(1); y++)
+                {
+                    tempImage[x, y] = (byte)Math.Abs(inputImage1[x, y] - inputImage2[x, y]);
+                }
+            }
+            return tempImage;
+        }
+
+        private byte[,][,] CreateHierarchicalScaleSpace(byte[,] inputImage, byte size, float k)
+        {
+            float sig1 = k;
+            float sig2 = sig1 * k;
+            float sig3 = sig2 * k;
+            float sig4 = sig3 * k;
+            float sig5 = sig4 * k; //just used when constructing gausImage42
+            float[,] gausFil0 = createGaussianFilter(size, 1); //meant to calculate gausImage(x,-1) which would have a sigma of k/k = 1
+            float[,] gausFil1 = createGaussianFilter(size, sig1);
+            float[,] gausFil2 = createGaussianFilter(size, sig2);
+            float[,] gausFil3 = createGaussianFilter(size, sig3);
+            float[,] gausFil4 = createGaussianFilter(size, sig4);
+            float[,] gausFil5 = createGaussianFilter(size, sig5);
+
+            byte[,] gausImageneg10 = convolveImage(inputImage, gausFil0);
+            byte[,] gausImage00 = convolveImage(inputImage, gausFil1);
+            byte[,] gausImage10 = convolveImage(inputImage, gausFil2);
+            byte[,] gausImage20 = convolveImage(inputImage, gausFil3);
+            byte[,] gausImage30 = convolveImage(inputImage, gausFil4);
+            byte[,] gausImage40 = convolveImage(inputImage, gausFil5);
+
+            byte[,] D0neg1 = ImageDif(gausImageneg10, gausImage00);
+            byte[,] D00 = ImageDif(gausImage00, gausImage10);
+            byte[,] D01 = ImageDif(gausImage10, gausImage20);
+            byte[,] D02 = ImageDif(gausImage20, gausImage30);
+            byte[,] D03 = ImageDif(gausImage20, gausImage30);
+
+            byte[,] halfImage = new byte[inputImage.GetLength(0) / 2, inputImage.GetLength(1) / 2];
+            byte[,] quarterImage = new byte[inputImage.GetLength(0) / 4, inputImage.GetLength(1) / 4];
+            for (int x = 0; x < inputImage.GetLength(0); x += 2)
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y += 2)
+                {
+                    halfImage[x / 2, y / 2] = gausImage30[x, y];
+                }
+            }
+
+            byte[,] gausImageneg11 = convolveImage(halfImage, gausFil0);
+            byte[,] gausImage01 = convolveImage(halfImage, gausFil1);
+            byte[,] gausImage11 = convolveImage(halfImage, gausFil2);
+            byte[,] gausImage21 = convolveImage(halfImage, gausFil3);
+            byte[,] gausImage31 = convolveImage(halfImage, gausFil4);
+            byte[,] gausImage41 = convolveImage(halfImage, gausFil5);
+
+            byte[,] D1neg1 = ImageDif(gausImageneg11, gausImage01);
+            byte[,] D10 = ImageDif(gausImage01, gausImage11);
+            byte[,] D11 = ImageDif(gausImage11, gausImage21);
+            byte[,] D12 = ImageDif(gausImage21, gausImage31);
+            byte[,] D13 = ImageDif(gausImage31, gausImage41); 
+
+
+            for (int x = 0; x < halfImage.GetLength(0); x += 2)
+            {
+                for (int y = 0; y < halfImage.GetLength(1); y += 2)
+                {
+                    quarterImage[x / 2, y / 2] = gausImage31[x, y];
+                }
+            }
+
+            byte[,] gausImageneg12 = convolveImage(quarterImage, gausFil0);
+            byte[,] gausImage02 = convolveImage(quarterImage, gausFil1);
+            byte[,] gausImage12 = convolveImage(quarterImage, gausFil2);
+            byte[,] gausImage22 = convolveImage(quarterImage, gausFil3);
+            byte[,] gausImage32 = convolveImage(quarterImage, gausFil4);
+            byte[,] gausImage42 = convolveImage(quarterImage, gausFil5);
+
+            byte[,] D2neg1 = ImageDif(gausImageneg12, gausImage02);
+            byte[,] D20 = ImageDif(gausImage02, gausImage12);
+            byte[,] D21 = ImageDif(gausImage12, gausImage22);
+            byte[,] D22 = ImageDif(gausImage22, gausImage32);
+            byte[,] D23 = ImageDif(gausImage32, gausImage42);
+
+            byte[,][,] scaleSpace = new byte[,][,] { { D0neg1, D00, D01, D02,D03 }, {D1neg1, D10, D11, D12, D13}, {D2neg1, D20, D21, D22, D23} };
+
+            return scaleSpace;
+        }
+
+        byte[,] DoubleSize(byte[,] inputImage)
+        {
+            byte[,] doubled = new byte[inputImage.GetLength(0) * 2, inputImage.GetLength(1) * 2];
+            for (int x = 0; x < inputImage.GetLength(0); x ++)
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y ++)
+                {
+                   doubled[x * 2, y * 2] = inputImage[x, y];
+                   doubled[x * 2 + 1, y * 2] = inputImage[x, y];
+                   doubled[x * 2, y * 2 + 1] = inputImage[x, y];
+                   doubled[x * 2 + 1, y * 2 + 1] = inputImage[x, y];
+                }
+            }
+            return doubled;
+        }
+
+        private List<Point> SIFTFindKeypoints(byte[,][,] hss)
+        {
+            List<Point> keyPoints = new List<Point>();
+
+            /////////////finds all local max and mins/////////////////////
+            ///
+            for(int i = 1; i < hss.GetLength(0) - 1; i++) //loops over octaves
+            {
+                for (int j = 1; j < 4; j++) //loops over the images withing the octave
+                {
+                    byte[,] currentImage = hss[i, j];
+                    for (int x = 0; x < currentImage.GetLength(0); x++)
+                    {
+                        for (int y = 0; y < currentImage.GetLength(1); y++) //each pixel withing the image
+                        {
+                            int max = hss[i, j][x, y];
+                            int min = hss[i, j][x, y];
+                            for (int k = 0; k < 3; k++) // loops surrounding collumns
+                            {
+                                int xx = x + k - 1;
+                                if (!(xx < 0 || xx >= currentImage.GetLength(0)))
+                                {
+                                    for (int l = 0; l < 3; l++) // loops rows
+                                    {
+                                        int yy = y + l - 1;
+                                        if (!(yy < 0 || yy >= currentImage.GetLength(1)))
+                                        {
+
+                                            for (int n = -1; n < 2; n++) //don't need to check whether it is out of bounds since it never will, loop 3rd dimension
+                                            {
+                                                
+                                                if (hss[i, j + n][xx, yy] > max)
+                                                {
+                                                    max = hss[i, j + n][xx, yy];
+                                                }
+
+                                                if (hss[i, j + n][xx, yy] < min)
+                                                {
+                                                    min = hss[i, j + n][xx, yy];
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (max == hss[i, j][x, y] || min == hss[i, j][x, y])
+                            {
+                                keyPoints.Add(new Point(x, y));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return keyPoints;
+        }
+
+        private float[,] normalizeFilter(float[,] filter)
+        {
+            float[,] normalized = filter;
+            float sum = 0;
+            foreach(float val in filter)
+            {
+                sum += Math.Abs(val);
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    normalized[i,j] = filter[i,j] / sum;
+                }
+            }
+            return normalized;
         }
     }
 }
