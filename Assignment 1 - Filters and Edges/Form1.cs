@@ -14,6 +14,10 @@ namespace INFOIBV
     {
         private Bitmap InputImage;
         private Bitmap OutputImage;
+        private Bitmap Diamond;
+        private Bitmap Club;
+        private Bitmap Heart;
+        private Bitmap Spade;
         private int Dir = 0;
 
         public INFOIBV()
@@ -48,12 +52,19 @@ namespace INFOIBV
             if (InputImage == null) return;                                 // get out if no input image
             if (OutputImage != null) OutputImage.Dispose();                 // reset output image
 
+
+            Image club = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Club.png");
+            Image diamond = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Diamond.png");
+            Image heart = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Heart.png");
+            Image spade = System.Drawing.Image.FromFile("..\\..\\suit_symbols\\Spade.png");
+
             Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
 
             // copy input Bitmap to array            
             for (int x = 0; x < InputImage.Size.Width; x++)                 // loop over columns
                 for (int y = 0; y < InputImage.Size.Height; y++)            // loop over rows
                     Image[x, y] = InputImage.GetPixel(x, y);                // set pixel color in array at (x,y)
+
 
             // ====================================================================
             // =================== YOUR FUNCTION CALLS GO HERE ====================
@@ -92,7 +103,7 @@ namespace INFOIBV
             }
 
             //byte[,] cornersDetected = cornerDetection(workingImage,verticalKernal,horizontalKernal);
-            byte[,] output = SIFT(workingImage);
+            //byte[,] output = SIFT(workingImage);
             //Histogram values = CountValues(workingImage);
             //Color[,] hImage = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
             //for (int x = 0; x < hough.Size.Width; x++)                 // loop over columns
@@ -103,14 +114,14 @@ namespace INFOIBV
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
 
-            OutputImage = new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
-            // copy array to output Bitmap
+            OutputImage = (Bitmap)heart;//new Bitmap(output.GetLength(0), output.GetLength(1)); // create new output image
+            /*/ copy array to output Bitmap
             for (int x = 0; x < output.GetLength(0); x++)             // loop over columns
                 for (int y = 0; y < output.GetLength(1); y++)         // loop over rows
                 {
                     Color newColor = Color.FromArgb(output[x, y], output[x, y], output[x, y]);
                     OutputImage.SetPixel(x, y, newColor);                  // set the pixel color at coordinate (x,y)
-                }
+                }*/
 
             pictureBox2.Image = OutputImage;                         // display output image
 
@@ -1344,12 +1355,16 @@ namespace INFOIBV
                         if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
                         {
                             float magnitude = (float)Math.Sqrt((L[x + 1,y] - L[x - 1,y]) ^ 2 + (L[x,y + 1] - L[x,y - 1]) ^ 2);
-                            float theta = (float)Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / (float)Math.PI ;
+                            int theta = (int)(Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI) ;
+                            int distanceFromLowerVal = theta % 10;
+                            directionHistogram[(theta - distanceFromLowerVal) / 10] +=  (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
+                            directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
                         }
                         
                     }
 
                 }
+                //////smooth out histogram////////
 
             }
             return keypoints;
