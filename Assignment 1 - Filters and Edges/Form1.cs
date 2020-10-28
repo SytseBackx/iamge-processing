@@ -318,6 +318,49 @@ namespace INFOIBV
             return tempImage;
         }
 
+        private int[,] convolveImageInt(int[,] inputImage, float[,] filter)
+        {
+            // create temporary grayscale image
+            int[,] tempImage = new int[inputImage.GetLength(0), inputImage.GetLength(1)];
+
+            int kRows = filter.GetLength(0);
+            int kCols = filter.GetLength(1);
+            int filterRadiusX = kRows / 2;
+            int filterRadiusY = kCols / 2;
+
+            for (int x = 0; x < inputImage.GetLength(0); x++)                 // loop over columns
+            {
+                for (int y = 0; y < inputImage.GetLength(1); y++)            // loop over rows
+                {
+                    float pixelColor = 0;
+                    for (int k = 0; k < kRows; k++)
+                    {
+                        int xoffset = filterRadiusX - k;
+                        int xx = x + (xoffset);
+
+                        for (int l = 0; l < kCols; l++)
+                        {
+                            int yoffset = filterRadiusY - l;
+
+
+                            int yy = y + (yoffset);
+
+                            if (xx >= 0 && xx < inputImage.GetLength(0) && yy >= 0 && yy < inputImage.GetLength(1))
+                            {
+                                float colorval = inputImage[xx, yy];
+                                float scalar = filter[xoffset + filterRadiusX, yoffset + filterRadiusY];
+                                pixelColor += (colorval * scalar);
+                            }
+
+                        }
+                    }
+                    tempImage[x, y] = Convert.ToByte(Math.Abs(pixelColor));
+
+                }
+            }
+            return tempImage;
+        }
+
 
         /*
          * medianFilter: apply median filtering on an input image with a kernel of specified size
@@ -1068,11 +1111,15 @@ namespace INFOIBV
 
         private byte[,] SIFT(byte[,] inputImage)
         {
-            int[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, 17, (float)Math.Sqrt(2));
+            float k = (float)Math.Sqrt(2);
+            byte size = 17;
+            int[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, size, k);
 
-            List<Point> keyPoints = SIFTFindKeypoints(HSS,10, inputImage);
+            List<Tuple<int, int, int, int>> keyPoints = SIFTFindKeypoints(HSS, 10, inputImage);
 
-            List<Point> teset = keyPoints;
+            List<Tuple<int, int, int, int>> keyPointsdir = DetermineKeyPointDirection(keyPoints, inputImage, k, size);
+
+            List<Tuple<int, int, int, int>> teset = keyPoints;
 
             byte[,] tempImage = inputImage;
 
@@ -1143,7 +1190,7 @@ namespace INFOIBV
             int[,] D10 = ImageDif(gausImage01, gausImage11);
             int[,] D11 = ImageDif(gausImage11, gausImage21);
             int[,] D12 = ImageDif(gausImage21, gausImage31);
-            int[,] D13 = ImageDif(gausImage31, gausImage41); 
+            int[,] D13 = ImageDif(gausImage31, gausImage41);
 
 
             for (int x = 0; x < halfImage.GetLength(0); x += 2)
@@ -1167,7 +1214,7 @@ namespace INFOIBV
             int[,] D22 = ImageDif(gausImage22, gausImage32);
             int[,] D23 = ImageDif(gausImage32, gausImage42);
 
-            int[,][,] scaleSpace = new int[,][,] { { D0neg1, D00, D01, D02,D03 }, {D1neg1, D10, D11, D12, D13}, {D2neg1, D20, D21, D22, D23} };
+            int[,][,] scaleSpace = new int[,][,] { { D0neg1, D00, D01, D02, D03 }, { D1neg1, D10, D11, D12, D13 }, { D2neg1, D20, D21, D22, D23 } };
 
             return scaleSpace;
         }
@@ -1188,12 +1235,13 @@ namespace INFOIBV
             return doubled;
         }*/
 
-        private List<Point> SIFTFindKeypoints(int[,][,] hss, int threshold, byte[,] inputImage)
+        private List<Tuple<int, int, int, int>> SIFTFindKeypoints(int[,][,] hss, int threshold, byte[,] inputImage)
         {
-            List<Point> keyPoints = new List<Point>();
+            List<Tuple<int,int,int,int>> tempKeyPoints = new List<Tuple<int, int, int, int>>();
+            List<Tuple<int, int, int, int>> keyPoints = new List<Tuple<int, int, int, int>>();
 
             /////////////finds all local max and mins/////////////////////
-            for(int i = 1; i < hss.GetLength(0) - 1; i++) //loops over octaves
+            for (int i = 1; i < hss.GetLength(0) - 1; i++) //loops over octaves
             {
                 for (int j = 1; j < 4; j++) //loops over the images withing the octave
                 {
@@ -1217,7 +1265,7 @@ namespace INFOIBV
 
                                             for (int n = -1; n < 2; n++) //don't need to check whether it is out of bounds since it never will, loop 3rd dimension
                                             {
-                                                
+
                                                 if (hss[i, j + n][xx, yy] > max)
                                                 {
                                                     max = hss[i, j + n][xx, yy];
@@ -1234,29 +1282,77 @@ namespace INFOIBV
                             }
                             if ((max == hss[i, j][x, y] || min == hss[i, j][x, y]) && Math.Abs(hss[i, j][x, y]) > threshold)
                             {
-                                keyPoints.Add(new Point(x, y));
+                                tempKeyPoints.Add(new Tuple<int, int, int, int>(i,j,x,y));
                             }
                         }
                     }
                 }
             }
 
-            ///////fit function with taylors sereis/////////
+            ///////fit function with taylors series/////////
 
-            foreach (Point candidate in keyPoints)
+            foreach (Tuple<int, int, int, int> candidate in tempKeyPoints)
             {
 
             }
 
             ///////////remove edge candidates//////////////
-            byte[,] Dx = convolveImage(convolveImage(inputImage, horizontalKernel), gausFilter);
-            byte[,] Dy = convolveImage(convolveImage(inputImage, verticalKernel), gausFilter);
-            foreach (Point candidate in keyPoints)
+            float[,] horizontalKernal = new float[3, 1] { { -0.5f }, { 0 }, { 0.5f } };
+            float[,] verticalKernal = new float[1, 3] { { -0.5f, 0, 0.5f } };
+            float alpha = 0.05f;
+
+            int cornerThreshold = 1;
+            foreach (Tuple<int, int, int, int> candidate in tempKeyPoints)
             {
+                int i = candidate.Item1;
+                int j = candidate.Item2;
+                int[,] Dx = convolveImageInt(hss[i,j], horizontalKernal);
+                int[,] Dy = convolveImageInt(hss[i, j], verticalKernal);
+                int x = candidate.Item3;
+                int y = candidate.Item4;
+                int Dxval = Dx[x, y];
+                int Dyval = Dy[x, y];
+                float A = Dxval * Dxval;
+                float B = Dyval * Dyval;
+                float C = Dyval * Dyval;
+
+                float Q = (A * B - C * C) - alpha * (A + B) * (A + B);
+                if (Q > cornerThreshold)
+                {
+                     keyPoints.Add(candidate);
+                }
+
 
             }
 
             return keyPoints;
+        }
+
+        private List<Tuple<int, int, int, int>> DetermineKeyPointDirection(List<Tuple<int, int, int, int>> keypoints, byte[,] inputImage, float k, byte size)
+        {
+            foreach (Tuple<int, int, int, int> keyPoint in keypoints)
+            {
+                int i = keyPoint.Item1;
+                int j = keyPoint.Item2;
+                float sigma = (float)Math.Pow(k,j) * (2 ^ (i-1)); 
+                byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
+                int[] directionHistogram = new int[36];
+                for (int x = 0; x < L.GetLength(0); x++) // loop over columns
+                {
+                    for (int y = 0; y < L.GetLength(1); y++) // loop over rows
+                    {
+                        if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
+                        {
+                            float magnitude = (float)Math.Sqrt((L[x + 1,y] - L[x - 1,y]) ^ 2 + (L[x,y + 1] - L[x,y - 1]) ^ 2);
+                            float theta = (float)Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / (float)Math.PI ;
+                        }
+                        
+                    }
+
+                }
+
+            }
+            return keypoints;
         }
 
         private float[,] normalizeFilter(float[,] filter)
