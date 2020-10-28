@@ -1068,34 +1068,34 @@ namespace INFOIBV
 
         private byte[,] SIFT(byte[,] inputImage)
         {
-            byte[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, 17, (float)Math.Sqrt(2));
+            int[,][,] HSS = CreateHierarchicalScaleSpace(inputImage, 17, (float)Math.Sqrt(2));
 
-            List<Point> keyPoints = SIFTFindKeypoints(HSS);
+            List<Point> keyPoints = SIFTFindKeypoints(HSS,10, inputImage);
 
             List<Point> teset = keyPoints;
 
-            byte[,] tempImage = HSS[2,2];
+            byte[,] tempImage = inputImage;
 
             return tempImage;
         }
 
         //assumes the inputimages are the same size, will throw index out of range error if the second image is larger
-        private byte[,] ImageDif(byte[,] inputImage1, byte[,] inputImage2)
+        private int[,] ImageDif(byte[,] inputImage1, byte[,] inputImage2)
         {
 
-            byte[,] tempImage = new byte[inputImage1.GetLength(0), inputImage1.GetLength(1)];
+            int[,] tempImage = new int[inputImage1.GetLength(0), inputImage1.GetLength(1)];
 
             for (int x = 0; x < inputImage1.GetLength(0); x++)
             {
                 for (int y = 0; y < inputImage1.GetLength(1); y++)
                 {
-                    tempImage[x, y] = (byte)Math.Abs(inputImage1[x, y] - inputImage2[x, y]);
+                    tempImage[x, y] = (inputImage1[x, y] - inputImage2[x, y]);
                 }
             }
             return tempImage;
         }
 
-        private byte[,][,] CreateHierarchicalScaleSpace(byte[,] inputImage, byte size, float k)
+        private int[,][,] CreateHierarchicalScaleSpace(byte[,] inputImage, byte size, float k)
         {
             float sig1 = k;
             float sig2 = sig1 * k;
@@ -1116,11 +1116,11 @@ namespace INFOIBV
             byte[,] gausImage30 = convolveImage(inputImage, gausFil4);
             byte[,] gausImage40 = convolveImage(inputImage, gausFil5);
 
-            byte[,] D0neg1 = ImageDif(gausImageneg10, gausImage00);
-            byte[,] D00 = ImageDif(gausImage00, gausImage10);
-            byte[,] D01 = ImageDif(gausImage10, gausImage20);
-            byte[,] D02 = ImageDif(gausImage20, gausImage30);
-            byte[,] D03 = ImageDif(gausImage20, gausImage30);
+            int[,] D0neg1 = ImageDif(gausImageneg10, gausImage00);
+            int[,] D00 = ImageDif(gausImage00, gausImage10);
+            int[,] D01 = ImageDif(gausImage10, gausImage20);
+            int[,] D02 = ImageDif(gausImage20, gausImage30);
+            int[,] D03 = ImageDif(gausImage20, gausImage30);
 
             byte[,] halfImage = new byte[inputImage.GetLength(0) / 2, inputImage.GetLength(1) / 2];
             byte[,] quarterImage = new byte[inputImage.GetLength(0) / 4, inputImage.GetLength(1) / 4];
@@ -1139,11 +1139,11 @@ namespace INFOIBV
             byte[,] gausImage31 = convolveImage(halfImage, gausFil4);
             byte[,] gausImage41 = convolveImage(halfImage, gausFil5);
 
-            byte[,] D1neg1 = ImageDif(gausImageneg11, gausImage01);
-            byte[,] D10 = ImageDif(gausImage01, gausImage11);
-            byte[,] D11 = ImageDif(gausImage11, gausImage21);
-            byte[,] D12 = ImageDif(gausImage21, gausImage31);
-            byte[,] D13 = ImageDif(gausImage31, gausImage41); 
+            int[,] D1neg1 = ImageDif(gausImageneg11, gausImage01);
+            int[,] D10 = ImageDif(gausImage01, gausImage11);
+            int[,] D11 = ImageDif(gausImage11, gausImage21);
+            int[,] D12 = ImageDif(gausImage21, gausImage31);
+            int[,] D13 = ImageDif(gausImage31, gausImage41); 
 
 
             for (int x = 0; x < halfImage.GetLength(0); x += 2)
@@ -1161,18 +1161,18 @@ namespace INFOIBV
             byte[,] gausImage32 = convolveImage(quarterImage, gausFil4);
             byte[,] gausImage42 = convolveImage(quarterImage, gausFil5);
 
-            byte[,] D2neg1 = ImageDif(gausImageneg12, gausImage02);
-            byte[,] D20 = ImageDif(gausImage02, gausImage12);
-            byte[,] D21 = ImageDif(gausImage12, gausImage22);
-            byte[,] D22 = ImageDif(gausImage22, gausImage32);
-            byte[,] D23 = ImageDif(gausImage32, gausImage42);
+            int[,] D2neg1 = ImageDif(gausImageneg12, gausImage02);
+            int[,] D20 = ImageDif(gausImage02, gausImage12);
+            int[,] D21 = ImageDif(gausImage12, gausImage22);
+            int[,] D22 = ImageDif(gausImage22, gausImage32);
+            int[,] D23 = ImageDif(gausImage32, gausImage42);
 
-            byte[,][,] scaleSpace = new byte[,][,] { { D0neg1, D00, D01, D02,D03 }, {D1neg1, D10, D11, D12, D13}, {D2neg1, D20, D21, D22, D23} };
+            int[,][,] scaleSpace = new int[,][,] { { D0neg1, D00, D01, D02,D03 }, {D1neg1, D10, D11, D12, D13}, {D2neg1, D20, D21, D22, D23} };
 
             return scaleSpace;
         }
 
-        byte[,] DoubleSize(byte[,] inputImage)
+        /*byte[,] DoubleSize(byte[,] inputImage)
         {
             byte[,] doubled = new byte[inputImage.GetLength(0) * 2, inputImage.GetLength(1) * 2];
             for (int x = 0; x < inputImage.GetLength(0); x ++)
@@ -1186,19 +1186,18 @@ namespace INFOIBV
                 }
             }
             return doubled;
-        }
+        }*/
 
-        private List<Point> SIFTFindKeypoints(byte[,][,] hss)
+        private List<Point> SIFTFindKeypoints(int[,][,] hss, int threshold, byte[,] inputImage)
         {
             List<Point> keyPoints = new List<Point>();
 
             /////////////finds all local max and mins/////////////////////
-            ///
             for(int i = 1; i < hss.GetLength(0) - 1; i++) //loops over octaves
             {
                 for (int j = 1; j < 4; j++) //loops over the images withing the octave
                 {
-                    byte[,] currentImage = hss[i, j];
+                    int[,] currentImage = hss[i, j];
                     for (int x = 0; x < currentImage.GetLength(0); x++)
                     {
                         for (int y = 0; y < currentImage.GetLength(1); y++) //each pixel withing the image
@@ -1233,13 +1232,28 @@ namespace INFOIBV
                                     }
                                 }
                             }
-                            if (max == hss[i, j][x, y] || min == hss[i, j][x, y])
+                            if ((max == hss[i, j][x, y] || min == hss[i, j][x, y]) && Math.Abs(hss[i, j][x, y]) > threshold)
                             {
                                 keyPoints.Add(new Point(x, y));
                             }
                         }
                     }
                 }
+            }
+
+            ///////fit function with taylors sereis/////////
+
+            foreach (Point candidate in keyPoints)
+            {
+
+            }
+
+            ///////////remove edge candidates//////////////
+            byte[,] Dx = convolveImage(convolveImage(inputImage, horizontalKernel), gausFilter);
+            byte[,] Dy = convolveImage(convolveImage(inputImage, verticalKernel), gausFilter);
+            foreach (Point candidate in keyPoints)
+            {
+
             }
 
             return keyPoints;
