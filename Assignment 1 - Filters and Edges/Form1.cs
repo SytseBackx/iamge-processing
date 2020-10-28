@@ -54,7 +54,7 @@ namespace INFOIBV
 
 
             ////////////inporting the symbols and converting them to gretscale//////////////////
-            
+
 
             Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // create array to speed-up operations (Bitmap functions are very slow)
 
@@ -100,15 +100,24 @@ namespace INFOIBV
 
             byte[,] workingImage = convertToGrayscale(Image);          // convert image to grayscale
 
-            List<int[,,]> SIFTTransformDiamond = SIFT(diamond, 10000);
-            List<int[,,]> SIFTTransformHeart = SIFT(heart, 10000);
-            List<int[,,]> SIFTTransformClub = SIFT(club, 15000);
-            List<int[,,]> SIFTTransformSpade = SIFT(spade, 15000);
+            List<Tuple<int[,,], Point>> SIFTTransformDiamond = SIFT(diamond, 10000);
+            List<Tuple<int[,,], Point>> SIFTTransformHeart = SIFT(heart, 10000);
+            List<Tuple<int[,,], Point>> SIFTTransformClub = SIFT(club, 15000);
+            List<Tuple<int[,,], Point>> SIFTTransformSpade = SIFT(spade, 15000);
 
-            List<int[,,]> SIFTTransformRed = SIFT(workingImage, 10000);
-            List<int[,,]> SIFTTransformBlack = SIFT(workingImage, 15000);
-            byte[,] output = spade;
-            
+            List<Tuple<int[,,], Point>> SIFTTransformRed = SIFT(workingImage, 10000);
+            List<Tuple<int[,,], Point>> SIFTTransformBlack = SIFT(workingImage, 15000);
+
+            byte[,] DiamondBoundingBoxes = DrawOverlap(SIFTTransformRed, SIFTTransformDiamond);
+            byte[,] HeartBoundingBoxes = DrawOverlap(SIFTTransformRed, SIFTTransformHeart);
+            byte[,] ClubBoundingBoxes = DrawOverlap(SIFTTransformBlack, SIFTTransformClub);
+            byte[,] SpadeBoundingBoxes = DrawOverlap(SIFTTransformBlack, SIFTTransformSpade);
+
+            byte[,] boundingBoxes = OrImages( OrImages(DiamondBoundingBoxes,HeartBoundingBoxes), OrImages(ClubBoundingBoxes, SpadeBoundingBoxes));
+
+
+            byte[,] output = boundingBoxes;
+
 
             // ==================== END OF YOUR FUNCTION CALLS ====================
             // ====================================================================
@@ -1119,7 +1128,7 @@ namespace INFOIBV
             return corners;
         }
 
-        private List<int[,,]> SIFT(byte[,] inputImage, int contrastThreshold)
+        private List<Tuple<int[,,],Point>> SIFT(byte[,] inputImage, int contrastThreshold)
         {
             float k = (float)Math.Sqrt(2);
             byte size = 17;
@@ -1131,7 +1140,7 @@ namespace INFOIBV
 
             List<Tuple<int, int, int, int>> teset = keyPoints;
 
-            List<int[,,]> localDiscriptors = 
+            List<Tuple<int[,,], Point>> localDiscriptors = SIFTDescriptor(inputImage, keyPoints, int scale, float angle, float k, byte size);
 
             return localDiscriptors;
         }
@@ -1344,24 +1353,24 @@ namespace INFOIBV
             {
                 int i = keyPoint.Item1;
                 int j = keyPoint.Item2;
-                float sigma = (float)Math.Pow(k,j) * (2 ^ (i-1)); 
+                float sigma = (float)Math.Pow(k, j) * (2 ^ (i - 1));
                 byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
                 int[] directionHistogram = new int[36];
                 int x = keyPoint.Item3;
                 int y = keyPoint.Item4;
                 if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
                 {
-                    float magnitude = (float)Math.Sqrt((L[x + 1,y] - L[x - 1,y]) ^ 2 + (L[x,y + 1] - L[x,y - 1]) ^ 2);
-                    int theta = (int)(Math.Atan2(L[x,y + 1] - L[x,y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI) ;
+                    float magnitude = (float)Math.Sqrt((L[x + 1, y] - L[x - 1, y]) ^ 2 + (L[x, y + 1] - L[x, y - 1]) ^ 2);
+                    int theta = (int)(Math.Atan2(L[x, y + 1] - L[x, y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI);
                     int distanceFromLowerVal = theta % 10;
-                    directionHistogram[(theta - distanceFromLowerVal) / 10] +=  (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
+                    directionHistogram[(theta - distanceFromLowerVal) / 10] += (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
                     directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
 
                 }
                 //////smooth out histogram////////
                 ///
 
-                keypointWithHisto.Add(new Tuple<int, int, int, int, int[]>(i,j,x,y,directionHistogram));
+                keypointWithHisto.Add(new Tuple<int, int, int, int, int[]>(i, j, x, y, directionHistogram));
 
             }
             return keypointWithHisto;
@@ -1371,7 +1380,7 @@ namespace INFOIBV
         {
             float[,] normalized = filter;
             float sum = 0;
-            foreach(float val in filter)
+            foreach (float val in filter)
             {
                 sum += Math.Abs(val);
             }
@@ -1379,7 +1388,7 @@ namespace INFOIBV
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    normalized[i,j] = filter[i,j] / sum;
+                    normalized[i, j] = filter[i, j] / sum;
                 }
             }
             return normalized;
@@ -1433,6 +1442,14 @@ namespace INFOIBV
             double radian = angle * (Math.PI / 180);
             Point c = new Point(p.X + dist * (int)Math.Cos(radian), p.Y + dist * (int)Math.Sin(radian));
             return c;
+        }
+
+        //Is supposed to draw a bounding box according to the local descriptor on the given point of input inputImage
+        byte[,] DrawOverlap(List<Tuple<int[,,],Point>> inputImageDescriptor, List<Tuple<int[,,], Point>> symbol)
+        {
+            byte[,] tempImage = new byte[InputImage.Size.Width, InputImage.Size.Height];
+
+            return tempImage;
         }
     }
 }
