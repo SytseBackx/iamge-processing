@@ -1393,32 +1393,65 @@ namespace INFOIBV
             int half = scale / 2;
             int segment = half / 2;
             Point punt = new Point(keypoint.Item3, keypoint.Item4);
+            //calculate the center (keypoint) on the new coordinate system
             Point center = ConvertSystem(angle, punt);
+            List<Point> centers = new List<Point>();
+            //calculate left bottom, left middle and left upper corner coordinates
+            //hardcoded due to lack of time
             Point LB = PointOnLine(angle + 90, PointOnLine(angle, center, -half), -half);
+            Point LB1 = PointOnLine(angle, LB, segment);
+            Point LB2 = PointOnLine(angle, LB1, segment);
+            Point LB3 = PointOnLine(angle, LB2, segment);
             Point LM = PointOnLine(angle, center, -half);
-            Point LO = PointOnLine(angle + 90, PointOnLine(angle, center, -half), half);
+            Point B1 = PointOnLine(angle+ 90, PointOnLine(angle, LB, segment), segment);
+            Point LM1 = PointOnLine(angle, B1, -segment);
+            Point B2 = PointOnLine(angle + 90, B1, -segment);
+            Point B3 = PointOnLine(angle, B2, segment);
+            Point B4 = PointOnLine(angle, B3, segment);
+            Point C1 = PointOnLine(angle, center, -segment);
+            Point C3 = PointOnLine(angle, center, segment);
+            Point C4 = PointOnLine(angle, center, half);
+            Point D1 = PointOnLine(angle +90, PointOnLine(angle, center, segment), -segment);
+            Point D2 = PointOnLine(angle, D1, segment);
+            Point D3 = PointOnLine(angle, D2, segment);
+            Point D4 = PointOnLine(angle, D3, segment);
+            Point E1 = PointOnLine(angle + 90, PointOnLine(angle, D1, segment), segment);
+            Point E2 = PointOnLine(angle, E1, segment);
+            Point E3 = PointOnLine(angle, E2, segment);
+            Point LO = PointOnLine(angle, D1, -segment);
+            Point E4 = PointOnLine(angle, E3, segment);
+            centers.Add(CalcCenter(LB, B1)); centers.Add(CalcCenter(LB1, B2)); centers.Add(CalcCenter(LB2, B3)); centers.Add(CalcCenter(LB3, B4)); //centers of top row
+            centers.Add(CalcCenter(LM1, C1)); centers.Add(CalcCenter(B1, center)); centers.Add(CalcCenter(B2, C3)); centers.Add(CalcCenter(B3, C4));  //SECOND ROW
+            centers.Add(CalcCenter(LM, D1)); centers.Add(CalcCenter(C1, D2)); centers.Add(CalcCenter(center, D3)); centers.Add(CalcCenter(C3, D4));//third row
+            centers.Add(CalcCenter(LO, E1)); centers.Add(CalcCenter(D1, E2)); centers.Add(CalcCenter(D2, E3)); centers.Add(CalcCenter(D3, E4)); //final row
 
-            //histogram in progress
-            int i = keypoint.Item1;
-            int j = keypoint.Item2;
-            float sigma = (float)Math.Pow(k, j) * (2 ^ (i - 1));
-            byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
-            int[] directionHistogram = new int[36];
-            for (int x = 0; x < L.GetLength(0); x++) // loop over columns
+            for (int m = 0; m < centers.Count(); m++)
             {
-                for (int y = 0; y < L.GetLength(1); y++) // loop over rows
+
+                //histogram in progress
+                int i = keypoint.Item1;
+                int j = keypoint.Item2;
+                float sigma = (float)Math.Pow(k, j) * (2 ^ (i - 1));
+                byte[,] L = convolveImage(inputImage, createGaussianFilter(size, sigma));
+                int[] directionHistogram = new int[36];
+                for (int a = 0; a < centers.Count; a++) // loop over columns
                 {
-                    if (!(x == 0 || x >= L.GetLength(0) || y == 0 || y >= L.GetLength(1)))
+                    for (int b = 0; b < centers.Count; b++) // loop over rows
                     {
-                        float magnitude = (float)Math.Sqrt((L[x + 1, y] - L[x - 1, y]) ^ 2 + (L[x, y + 1] - L[x, y - 1]) ^ 2);
-                        int theta = (int)(Math.Atan2(L[x, y + 1] - L[x, y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI);
-                        int distanceFromLowerVal = theta % 10;
-                        directionHistogram[(theta - distanceFromLowerVal) / 10] += (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
-                        directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
+                        if (!(a == 0 || a >= L.GetLength(0) || b == 0 || b >= L.GetLength(1)))
+                        {
+                            int x = centers[a].X;
+                            int y = centers[a].Y;
+                            float magnitude = (float)Math.Sqrt((L[x + 1, y] - L[x - 1, y]) ^ 2 + (L[x, y + 1] - L[x, y - 1]) ^ 2);
+                            int theta = (int)(Math.Atan2(L[x, y + 1] - L[x, y - 1], L[x + 1, y] - L[x, y - 1]) * 180 / Math.PI);
+                            int distanceFromLowerVal = theta % 10;
+                            directionHistogram[(theta - distanceFromLowerVal) / 10] += (int)(magnitude * ((10f - distanceFromLowerVal) / 10));
+                            directionHistogram[(theta - distanceFromLowerVal) / 10 + 1] += (int)(magnitude * (distanceFromLowerVal) / 10);
+                        }
+
                     }
 
                 }
-
             }
         }
 
@@ -1435,6 +1468,13 @@ namespace INFOIBV
         {
             double radian = angle * (Math.PI / 180);
             Point c = new Point(p.X + dist * (int)Math.Cos(radian), p.Y + dist * (int)Math.Sin(radian));
+            return c;
+        }
+        Point CalcCenter(Point a, Point b)
+        {
+            int x = (a.X + b.X) / 2;
+            int y = (a.Y + b.Y) / 2;
+            Point c = new Point(x, y);
             return c;
         }
     }
